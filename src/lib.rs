@@ -7,7 +7,6 @@
 //! started parsing arguments using this library.
 
 use std::env;
-use std::path::PathBuf;
 
 /// Primary error enum for exceptions related to methods inside of the climake
 /// module.
@@ -52,7 +51,7 @@ impl CLIMake {
         if passed_args.len() == 1 {
             match &self.none_run {
                 Some(to_run) => {
-                    (self.none_run.as_ref().unwrap())();
+                    (to_run)();
                     std::process::exit(0); // exited successfully
                 }
                 None => {
