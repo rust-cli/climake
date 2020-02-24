@@ -1,0 +1,8 @@
+[package]
+name = "climake"
+description = "A simple CLI generator using structures with no dependancies."
+version = "0.1.0"
+authors = ["Owez <owez@scalist.net>"]
+edition = "2018"
+
+[dependencies]
