@@ -27,7 +27,7 @@ impl CLIMake {
     }
 
     /// Displays help message in `stdout` using added arguments.
-    fn help_msg(&self) {
+    pub fn help_msg(&self) {
         let header_text = self.header_text();
         let mut generated_help = format!("{}Options:", header_text);
 
