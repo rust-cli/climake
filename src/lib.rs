@@ -74,7 +74,7 @@ impl CLIMake {
         let mut valid_count = 0;
 
         for arg in self.args.iter() {
-            let short_call_pass = check_args(format!("--{}", arg.short_call));
+            let short_call_pass = check_args(format!("-{}", arg.short_call));
             let standalone_call_pass = match &arg.standalone_call {
                 Some(x) => check_args(x.clone()),
                 None => false,
@@ -130,10 +130,10 @@ impl CLIMake {
 
             let info_help = match &arg.standalone_call {
                 Some(standalone_call) => format!(
-                    "  --{} / {}\t\t | {}",
+                    "  -{} / {}\t\t | {}",
                     arg.short_call, standalone_call, ensured_arg_help
                 ),
-                None => format!("  --{}\t\t | {}", arg.short_call, ensured_arg_help),
+                None => format!("  -{}\t\t | {}", arg.short_call, ensured_arg_help),
             };
 
             generated_help.push_str(&info_help);
@@ -169,6 +169,9 @@ pub struct Argument {
     /// A short call parameter that is used with a prefix of a single hyphen (`-`).
     pub short_call: String,
 
+    /// Number of parameters to collect after argument is detected
+    pub param_nums: i8,
+
     /// A long call parameter. This allows a user to enter something like
     /// `./test hello` instead of `./test --hello`.
     pub standalone_call: Option<String>,
@@ -177,8 +180,9 @@ pub struct Argument {
     pub help: Option<String>,
 
     /// Item to run when asked to execute, this should be the main usage of
-    /// the argument.
-    pub run: Box<dyn Fn()>,
+    /// the argument. The [Vec]<[String]> input is linked to [Argument::param_nums]
+    /// and will be blank provided `param_nums` is 0.
+    pub run: Box<dyn Fn(Vec<String>)>,
 }
 
 #[cfg(test)]
@@ -188,12 +192,13 @@ mod test {
     #[test]
     fn basic_argparse() {
         /// Inside func to hook onto inside `new_arg`
-        fn example_run() {
+        fn example_run(args: Vec<String>) {
             println!("Basic argparse working");
         }
 
         let new_arg = Argument {
             short_call: String::from("t"),
+            param_nums: 0
             standalone_call: Some(String::from("test")),
             help: None,
             run: Box::new(|| example_run()),
