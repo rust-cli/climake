@@ -85,12 +85,12 @@ impl CLIMake {
 
                 let run_args = match arg.got_param {
                     true => {
-                        if self.args.len() < ind + 1 {
+                        if passed_args.len() < ind + 1 {
                             println!("{}No body given for argument!", self.header_text());
                             std::process::exit(1);
                         }
 
-                        Some(passed_args[ind + 2].clone())
+                        Some(passed_args[ind + 1].clone())
                     }
                     false => None,
                 };
@@ -127,7 +127,7 @@ impl CLIMake {
     pub fn help_msg(&self) -> String {
         let header_text = self.header_text();
         let mut generated_help = format!(
-            "{}Options:\n  --help / help\t\t | Shows this message\n",
+            "{}Options:\n  -h / help / --help\t | Shows this message",
             header_text
         );
 
@@ -143,10 +143,10 @@ impl CLIMake {
 
             let info_help = match &arg.standalone_call {
                 Some(standalone_call) => format!(
-                    "  -{} / {}\t\t | {}",
+                    "\n  -{} / {}\t\t | {}",
                     arg.short_call, standalone_call, ensured_arg_help
                 ),
-                None => format!("  -{}\t\t | {}", arg.short_call, ensured_arg_help),
+                None => format!("\n  -{}\t\t | {}", arg.short_call, ensured_arg_help),
             };
 
             generated_help.push_str(&info_help);
