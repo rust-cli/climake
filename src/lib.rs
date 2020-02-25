@@ -82,7 +82,7 @@ impl CLIMake {
 
             if short_call_pass || standalone_call_pass {
                 valid_count += 1;
-                (arg.run)();
+                (arg.run)(vec![String::from("This feature is coming soon!")]);
             }
         }
 
@@ -198,7 +198,7 @@ mod test {
 
         let new_arg = Argument {
             short_call: String::from("t"),
-            param_nums: 0
+            param_nums: 0,
             standalone_call: Some(String::from("test")),
             help: None,
             run: Box::new(|| example_run()),
