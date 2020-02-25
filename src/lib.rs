@@ -16,10 +16,14 @@ pub enum CLIMakeError {
     /// the user did not enter any valid arguments. This will not run if a
     /// [CLIMake::none_run] is given.
     NoArgumentsPassed,
+
+    /// This occurs when user tries to overwrite the non-movable help command
+    /// that is automatically generated. This is currently not passable if using
+    /// `-h` or `--help` or `help`.
+    HelpOverwrite,
 }
 
-/// Main structure for climake, the [CLIMake] object. An instance of this is
-/// made with the standard rust structure initialsation and further arguments
+/// Main structure for climake, the [CLIMake] object. Further arguments
 /// can easily be added using [CLIMake::add_existing_arg].
 pub struct CLIMake {
     /// Name of overall CLI
@@ -43,7 +47,7 @@ impl CLIMake {
     ///
     /// **NOTE: This function will eventually close the program running using
     /// [std::process].**
-    pub fn parse_args(&self) {
+    pub fn parse_args(&mut self) {
         // below are passed in arguments and a closure to search through vector above it
         let passed_args: Vec<String> = env::args().collect();
         let check_args = |query: String| passed_args.iter().position(|a| a == &query).is_some();
@@ -59,55 +63,83 @@ impl CLIMake {
                     std::process::exit(1); // exited with error
                 }
             }
+        } else if check_args(String::from("-h"))
+            || check_args(String::from("--help"))
+            || check_args(String::from("help"))
+        {
+            println!("{}", self.help_msg());
+            std::process::exit(0);
         }
 
+        let mut valid_count = 0;
+
         for arg in self.args.iter() {
-            let short_call_pass = check_args(String::clone(&arg.short_call));
+            let short_call_pass = check_args(format!("--{}", arg.short_call));
             let standalone_call_pass = match &arg.standalone_call {
                 Some(x) => check_args(x.clone()),
                 None => false,
             };
 
             if short_call_pass || standalone_call_pass {
+                valid_count += 1;
                 (arg.run)();
             }
+        }
+
+        if valid_count == 0 {
+            println!("{}Argument(s) passed are invalid!", self.header_text());
+            std::process::exit(1);
         }
 
         std::process::exit(0); // exited successfully
     }
 
     /// Adds a new argument to parser.
-    pub fn add_existing_arg(&mut self, new_arg: Argument) {
-        self.args.push(new_arg)
+    pub fn add_existing_arg(&mut self, new_arg: Argument) -> Result<(), CLIMakeError> {
+        let standalone_override_check = match &new_arg.standalone_call {
+            Some(x) => x == "help",
+            None => false
+        };
+
+        if new_arg.short_call == "h" || new_arg.short_call == "help" || standalone_override_check {
+            return Err(CLIMakeError::HelpOverwrite);
+        }
+
+        self.args.push(new_arg);
+
+        Ok(())
     }
 
     /// Displays help message in `stdout` using added arguments.
-    pub fn help_msg(&self) {
+    pub fn help_msg(&self) -> String {
         let header_text = self.header_text();
-        let mut generated_help = format!("{}Options:", header_text);
+        let mut generated_help = format!(
+            "{}Options:\n  --help / help\t\t | Shows this message\n",
+            header_text
+        );
 
         if self.args.len() == 0 {
-            return println!("{}No arguments made!", header_text);
+            return format!("{}No arguments made!", header_text);
         }
 
         for arg in self.args.iter() {
             let ensured_arg_help = match &arg.help {
                 Some(help) => String::clone(help),
-                None => String::from("Help not provided."),
+                None => String::from("[Help not provided]"),
             };
 
             let info_help = match &arg.standalone_call {
                 Some(standalone_call) => format!(
-                    "  -{} / -{} ({})",
+                    "  -{} / --{}\t\t | {}",
                     arg.short_call, standalone_call, ensured_arg_help
                 ),
-                None => format!("  -{} ({})", arg.short_call, ensured_arg_help),
+                None => format!("  --{}\t\t | {}", arg.short_call, ensured_arg_help),
             };
 
             generated_help.push_str(&info_help);
         }
 
-        println!("{}", generated_help);
+        generated_help
     }
 
     /// Returns nicely formatted header text that is used for each stdout pass
