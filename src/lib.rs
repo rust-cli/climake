@@ -130,7 +130,7 @@ impl CLIMake {
 
             let info_help = match &arg.standalone_call {
                 Some(standalone_call) => format!(
-                    "  -{} / --{}\t\t | {}",
+                    "  --{} / {}\t\t | {}",
                     arg.short_call, standalone_call, ensured_arg_help
                 ),
                 None => format!("  --{}\t\t | {}", arg.short_call, ensured_arg_help),
