@@ -136,20 +136,26 @@ impl CLIMake {
         }
 
         for arg in self.args.iter() {
+            let mut arg_help = format!("\n  -{}", arg.short_call);
+
+            if arg.standalone_call.is_some() {
+                arg_help.push_str(&format!(" / {}", arg.standalone_call.clone().unwrap()));
+            }
+
+            if arg.got_param {
+                arg_help.push_str(" [PARAM]");
+            } else {
+                arg_help.push_str("\t")
+            }
+
             let ensured_arg_help = match &arg.help {
                 Some(help) => String::clone(help),
                 None => String::from("[Help not provided]"),
             };
 
-            let info_help = match &arg.standalone_call {
-                Some(standalone_call) => format!(
-                    "\n  -{} / {}\t\t | {}",
-                    arg.short_call, standalone_call, ensured_arg_help
-                ),
-                None => format!("\n  -{}\t\t | {}", arg.short_call, ensured_arg_help),
-            };
+            arg_help.push_str(&format!("\t | {}", ensured_arg_help));
 
-            generated_help.push_str(&info_help);
+            generated_help.push_str(&arg_help);
         }
 
         generated_help
