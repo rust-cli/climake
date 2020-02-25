@@ -71,9 +71,9 @@ impl CLIMake {
             std::process::exit(0);
         }
 
-        let mut valid_count = 0;
+        let mut valid_count = false;
 
-        for arg in self.args.iter() {
+        for (ind, arg) in self.args.iter().enumerate() {
             let short_call_pass = check_args(format!("-{}", arg.short_call));
             let standalone_call_pass = match &arg.standalone_call {
                 Some(x) => check_args(x.clone()),
@@ -81,12 +81,25 @@ impl CLIMake {
             };
 
             if short_call_pass || standalone_call_pass {
-                valid_count += 1;
-                (arg.run)(vec![String::from("This feature is coming soon!")]);
+                valid_count = true;
+
+                let run_args = match arg.got_param {
+                    true => {
+                        if self.args.len() < ind + 1 {
+                            println!("{}No body given for argument!", self.header_text());
+                            std::process::exit(1);
+                        }
+
+                        Some(passed_args[ind + 2].clone())
+                    }
+                    false => None,
+                };
+
+                (arg.run)(run_args);
             }
         }
 
-        if valid_count == 0 {
+        if !valid_count {
             println!("{}Argument(s) passed are invalid!", self.header_text());
             std::process::exit(1);
         }
@@ -98,7 +111,7 @@ impl CLIMake {
     pub fn add_existing_arg(&mut self, new_arg: Argument) -> Result<(), CLIMakeError> {
         let standalone_override_check = match &new_arg.standalone_call {
             Some(x) => x == "help",
-            None => false
+            None => false,
         };
 
         if new_arg.short_call == "h" || new_arg.short_call == "help" || standalone_override_check {
@@ -169,8 +182,10 @@ pub struct Argument {
     /// A short call parameter that is used with a prefix of a single hyphen (`-`).
     pub short_call: String,
 
-    /// Number of parameters to collect after argument is detected
-    pub param_nums: i8,
+    /// Allows it to capture next element inside of arguments. This is
+    /// experimental and can be buggy if you do something like `hello hello`
+    /// that will go on forever.
+    pub got_param: bool,
 
     /// A long call parameter. This allows a user to enter something like
     /// `./test hello` instead of `./test --hello`.
@@ -180,9 +195,10 @@ pub struct Argument {
     pub help: Option<String>,
 
     /// Item to run when asked to execute, this should be the main usage of
-    /// the argument. The [Vec]<[String]> input is linked to [Argument::param_nums]
-    /// and will be blank provided `param_nums` is 0.
-    pub run: Box<dyn Fn(Vec<String>)>,
+    /// the argument. The [Option]<[String]> is linked to [Argument::got_param].
+    /// If got_param is `true`, there will always be [String] present, even if
+    /// inside of an [Option].
+    pub run: Box<dyn Fn(Option<String>)>,
 }
 
 #[cfg(test)]
@@ -192,13 +208,13 @@ mod test {
     #[test]
     fn basic_argparse() {
         /// Inside func to hook onto inside `new_arg`
-        fn example_run(args: Vec<String>) {
+        fn example_run(arg: Option<String>) {
             println!("Basic argparse working");
         }
 
         let new_arg = Argument {
             short_call: String::from("t"),
-            param_nums: 0,
+            got_param: false,
             standalone_call: Some(String::from("test")),
             help: None,
             run: Box::new(|| example_run()),
