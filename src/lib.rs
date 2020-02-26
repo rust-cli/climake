@@ -74,7 +74,11 @@ impl CLIMake {
         let mut valid_count = false;
 
         for (ind, arg) in self.args.iter().enumerate() {
-            let short_call_pass = check_args(format!("-{}", arg.short_call));
+            let short_call_pass = match &arg.short_call {
+                Some(x) => check_args(format!("-{}", x)),
+                None => false,
+            };
+
             let standalone_call_pass = match &arg.standalone_call {
                 Some(x) => check_args(x.clone()),
                 None => false,
@@ -109,12 +113,17 @@ impl CLIMake {
 
     /// Adds a new argument to parser.
     pub fn add_existing_arg(&mut self, new_arg: Argument) -> Result<(), CLIMakeError> {
+        let short_override_check = match &new_arg.short_call {
+            Some(x) => x == &'h',
+            None => false,
+        };
+
         let standalone_override_check = match &new_arg.standalone_call {
             Some(x) => x == "help",
             None => false,
         };
 
-        if new_arg.short_call == "h" || new_arg.short_call == "help" || standalone_override_check {
+        if short_override_check || standalone_override_check {
             return Err(CLIMakeError::HelpOverwrite);
         }
 
@@ -136,7 +145,10 @@ impl CLIMake {
         }
 
         for arg in self.args.iter() {
-            let mut arg_help = format!("\n  -{}", arg.short_call);
+            let mut arg_help = match arg.short_call {
+                Some(call) => format!("\n  -{}", call),
+                None => String::new(),
+            };
 
             if arg.standalone_call.is_some() {
                 arg_help.push_str(&format!(" / {}", arg.standalone_call.clone().unwrap()));
@@ -186,16 +198,16 @@ impl CLIMake {
 /// A single argument used inside of [CLIMaker].
 pub struct Argument {
     /// A short call parameter that is used with a prefix of a single hyphen (`-`).
-    pub short_call: String,
+    pub short_call: Option<char>,
+
+    /// A long call parameter. This allows a user to enter something like
+    /// `./test hello` instead of `./test --hello`.
+    pub standalone_call: Option<String>,
 
     /// Allows it to capture next element inside of arguments. This is
     /// experimental and can be buggy if you do something like `hello hello`
     /// that will go on forever.
     pub got_param: bool,
-
-    /// A long call parameter. This allows a user to enter something like
-    /// `./test hello` instead of `./test --hello`.
-    pub standalone_call: Option<String>,
 
     /// Help message (highly reccomended).
     pub help: Option<String>,
@@ -214,19 +226,19 @@ mod test {
     #[test]
     fn basic_argparse() {
         /// Inside func to hook onto inside `new_arg`
-        fn example_run(arg: Option<String>) {
+        fn example_run(_arg: Option<String>) {
             println!("Basic argparse working");
         }
 
         let new_arg = Argument {
-            short_call: String::from("t"),
+            short_call: Some('t'),
             got_param: false,
             standalone_call: Some(String::from("test")),
             help: None,
-            run: Box::new(|| example_run()),
+            run: Box::new(example_run),
         };
 
-        let cli = CLIMake {
+        let mut cli = CLIMake {
             name: String::from("Test CLI"),
             description: None,
             args: vec![new_arg],
