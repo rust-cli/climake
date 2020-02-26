@@ -94,10 +94,10 @@ impl CLIMake {
                     true => {
                         if passed_args.len() < valid_ind + 1 {
                             println!("{}No body given for argument!", self.header_text());
-                            std::process::exit(1); // TODO: Fix
+                            std::process::exit(1);
                         }
 
-                        Some(passed_args[valid_ind + 1].clone()) // TODO: Fix
+                        Some(passed_args[valid_ind + 1].clone())
                     }
                     false => None,
                 };
@@ -158,7 +158,7 @@ impl CLIMake {
             }
 
             if arg.got_param {
-                arg_help.push_str(" [PARAM]");
+                arg_help.push_str("  [PARAM]");
             } else {
                 arg_help.push_str("\t")
             }
@@ -177,11 +177,11 @@ impl CLIMake {
     }
 
     /// Returns nicely formatted header text that is used for each stdout pass
-    /// involving [CLIMaker].
+    /// involving [CLIMake].
     fn header_text(&self) -> String {
         let exe_name = env::current_exe().unwrap();
         let usage_info = format!(
-            "Usage: ./{} [OPTIONS]",
+            "Usage: ./{} [OPTIONS] [PARAM (optional)]",
             exe_name.file_name().unwrap().to_str().unwrap() // Thanks rust
         );
 
@@ -198,7 +198,7 @@ impl CLIMake {
     }
 }
 
-/// A single argument used inside of [CLIMaker].
+/// A single argument used inside of [CLIMake].
 pub struct Argument {
     /// A short call parameter that is used with a prefix of a single hyphen (`-`).
     pub short_call: Option<char>,
