@@ -136,7 +136,7 @@ impl CLIMake {
     pub fn help_msg(&self) -> String {
         let header_text = self.header_text();
         let mut generated_help = format!(
-            "{}Options:\n  -h / help / --help\t | Shows this message",
+            "{}Options:\n  -h  help  --help\t | Shows this message\n",
             header_text
         );
 
@@ -146,12 +146,12 @@ impl CLIMake {
 
         for arg in self.args.iter() {
             let mut arg_help = match arg.short_call {
-                Some(call) => format!("\n  -{}", call),
+                Some(call) => format!("  -{}", call),
                 None => String::new(),
             };
 
             if arg.standalone_call.is_some() {
-                arg_help.push_str(&format!(" / {}", arg.standalone_call.clone().unwrap()));
+                arg_help.push_str(&format!("  {}", arg.standalone_call.clone().unwrap()));
             }
 
             if arg.got_param {
@@ -165,7 +165,7 @@ impl CLIMake {
                 None => String::from("[Help not provided]"),
             };
 
-            arg_help.push_str(&format!("\t | {}", ensured_arg_help));
+            arg_help.push_str(&format!("\t | {}\n", ensured_arg_help));
 
             generated_help.push_str(&arg_help);
         }
