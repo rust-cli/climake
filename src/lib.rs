@@ -91,10 +91,10 @@ impl CLIMake {
                     true => {
                         if passed_args.len() < ind + 1 {
                             println!("{}No body given for argument!", self.header_text());
-                            std::process::exit(1);
+                            std::process::exit(1); // TODO: Fix
                         }
 
-                        Some(passed_args[ind + 1].clone())
+                        Some(passed_args[ind + 1].clone()) // TODO: Fix
                     }
                     false => None,
                 };
