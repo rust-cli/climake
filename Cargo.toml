@@ -4,7 +4,7 @@ description = "A simple CLI generator using structures with no dependancies."
 repository = "https://gitlab.com/pleasepm/climake"
 readme = "README.md"
 license = "MIT"
-version = "0.1.7"
+version = "0.2.0"
 authors = ["Owez <owez@scalist.net>"]
 edition = "2018"
 
