@@ -1,45 +1,54 @@
 # climake
 
-## Overview
+The simple, dependancy-less cli framework ✨
 
-climake or CLIMake is a simple, lightweight library for native argument parsing in Rust. It is designed to run without any dependancies apart from the [standard library](). This project does not aim to include "fancy" ux-orientated features of other Rust-based argument parsers but instead just aims to ge t the job done as uniformally, lightweight and as bug-free as possible.
-
-## Demonstration
-
-Provided the following rust code is compiled as `./x`:
+## Example
 
 ```rust
-/// Inside func to hook onto inside `new_arg`
-fn example_run() {
-    println!("Basic argparse working");
+use climake::*;
+
+/// This will be ran when the -q (or --qwerty) argument is ran. args are the
+/// arguments passed.
+fn qwerty_run_me(args: Vec<String>) {
+    println!(
+        "The -q (or --qwerty) argument was ran! Here are the arguments passed: {:?}.",
+        args
+    );
 }
 
-let new_arg = Argument {
-    short_call: String::from("t"),
-    standalone_call: Some(String::from("test")),
-    help: None,
-    run: Box::new(|| example_run()),
-};
+fn other_arg_main(args: Vec<String>) {
+    println!("The normal --other or -o or -t argument.");
+}
 
-let cli = CLIMake {
-    name: String::from("Test CLI"),
-    description: None,
-    args: vec![new_arg],
-    none_run: None,
-};
+fn main() {
+    let qwerty_arg = CliArgument::new(
+        vec!['q'],
+        vec!["qwerty"],
+        Some("Some useful help info."),
+        Box::new(&qwerty_run_me) // this could be any closure/func with the arg being `Vec<String>`
+    );
 
-cli.parse_args();
+    let other_arg = CliArgument::new(
+        vec!['o', 't'],
+        vec!["other"],
+        None, // no help here!
+        Box::new(&other_arg_main)
+    );
+
+    let cli = CliMake::new(
+        "Example CLI",
+        vec![qwerty_arg, other_arg],
+        Some("This is some help info for this example CLI.")
+    );
+
+    cli.parse() // runs all given parts like qwerty_run_me if called
+}
 ```
 
-We can use one of the following methods to call the objective `example_run()` function:
+## Installation
 
-- `./x -t`
-- `./x test`
+Simply add the following to your `Cargo.toml` file:
 
-This will then output as stdout the following:
-
-```none
-Basic argparse working
+```toml
+climake = "1.0"
 ```
-
-Tada! We have got an argument parser!

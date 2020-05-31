@@ -1,10 +1,10 @@
 [package]
 name = "climake"
 description = "A simple CLI generator using structures with no dependancies."
-repository = "https://gitlab.com/pleasepm/climake"
+repository = "https://gitlab.com/owez/climake"
 readme = "README.md"
 license = "MIT"
-version = "0.3.0"
+version = "1.0.0"
 authors = ["Owez <owez@scalist.net>"]
 edition = "2018"
 

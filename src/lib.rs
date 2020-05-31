@@ -1,10 +1,55 @@
-//! climake is a minimal-dependancies library for making simple arguments. This
-//! libraries aim is not features but to provide a simple way to parse arguments
-//! well enough with not much more processing used than the provided [std::env]
-//! from the standard library.
+//! The simple, dependancy-less cli framework ✨
 //!
-//! For more infomation, please see the [CliMake] object and [CliArgument] to get
-//! started parsing arguments using this library.
+//! ## Example
+//!
+//! ```rust
+//! use climake::*;
+//!
+//! /// This will be ran when the -q (or --qwerty) argument is ran. args are the
+//! /// arguments passed.
+//! fn qwerty_run_me(args: Vec<String>) {
+//!     println!(
+//!         "The -q (or --qwerty) argument was ran! Here are the arguments passed: {:?}.",
+//!         args
+//!     );
+//! }
+//!
+//! fn other_arg_main(args: Vec<String>) {
+//!     println!("The normal --other or -o or -t argument.");
+//! }
+//!
+//! fn main() {
+//!     let qwerty_arg = CliArgument::new(
+//!         vec!['q'],
+//!         vec!["qwerty"],
+//!         Some("Some useful help info."),
+//!         Box::new(&qwerty_run_me) // this could be any closure/func with the arg being `Vec<String>`
+//!     );
+//!
+//!     let other_arg = CliArgument::new(
+//!         vec!['o', 't'],
+//!         vec!["other"],
+//!         None, // no help here!
+//!         Box::new(&other_arg_main)
+//!     );
+//!
+//!     let cli = CliMake::new(
+//!         "Example CLI",
+//!         vec![qwerty_arg, other_arg],
+//!         Some("This is some help info for this example CLI.")
+//!     );
+//!
+//!     cli.parse() // runs all given parts like qwerty_run_me if called
+//! }
+//! ```
+//!
+//! ## Installation
+//!
+//! Simply add the following to your `Cargo.toml` file:
+//!
+//! ```toml
+//! climake = "1.0"
+//! ```
 
 #![allow(unused_assignments)] // strange rls errors for something that doesn't exist
 
@@ -13,34 +58,48 @@ use std::env;
 /// The way the argument is called, can short or long. This enum is made to be
 /// used in a [Vec] as then you may have multiple ways to call it.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
-pub enum CliCallType {
+enum CliCallType {
     /// Short call only, for example the `h` in `-hijk`.
     Short(char),
 
     /// Long call only, for example the `qwerty` in `--qwerty`.
+    ///
+    /// Using [String] here as its much easier than trying to do &[str] lifetimes.
     Long(String),
 }
 
-/// A single argument in a list of arguments to parse in [CliMake].
+/// A single argument in a list of arguments to parse later in [CliMake::parse].
+///
+/// ## Example inititation
+///
+/// ```ignore
+/// let arg_onetwo = CliArgument.new(
+///     vec!['o', 't'],
+///     vec!["onetwo"],
+///     Some("This is some detailed help for onetwo"),
+///     to_run_for_onetwo
+/// );
+/// ```
 pub struct CliArgument {
-    /// The way(s) in which you call this argument, used internally.
-    pub calls: Vec<CliCallType>,
+    /// Inner-command help, similar to [CliMake::help_str] but only for help
+    /// regarding this argument.
+    pub help_str: &'static str,
 
-    /// Optional inner-command help.
-    pub help_str: String,
+    /// The way(s) in which you call this argument, used internally.
+    calls: Vec<CliCallType>,
 
     /// What to run if the argument is called. This will always pass an argument
     /// to the runnable function which is a [Vec]<[String]> due to potential
-    /// arguments passed.
-    pub run: Box<dyn Fn(Vec<String>)>,
+    /// arguments passed, used internally.
+    run: Box<dyn Fn(Vec<String>)>,
 }
 
 impl CliArgument {
-    /// Creates a new argument
+    /// Creates a new argument in a simplistic manner.
     pub fn new(
         short_calls: Vec<char>,
-        long_calls: Vec<String>,
-        help: Option<String>,
+        long_calls: Vec<&'static str>,
+        help: Option<&'static str>,
         run: Box<dyn Fn(Vec<String>)>,
     ) -> Self {
         let mut calls: Vec<CliCallType> = Vec::new();
@@ -50,7 +109,7 @@ impl CliArgument {
         }
 
         for long_call in long_calls {
-            calls.push(CliCallType::Long(long_call));
+            calls.push(CliCallType::Long(String::from(long_call)));
         }
 
         if help.is_some() {
@@ -63,27 +122,60 @@ impl CliArgument {
 
         CliArgument {
             calls: calls,
-            help_str: String::from("No extra CLI help provided."),
+            help_str: "No extra CLI help provided.",
             run: run,
         }
     }
 }
 
-/// Main holder structure of entire CliMake library.
+/// Main holder structure of entire climake library, used to create new CLIs.
+///
+/// It is reccomended this be called something simple like `cli` for ease of use
+/// as this is the most used part of climake.
+///
+/// ## Example initiation
+///
+/// ```ignore
+/// let cli = CliMake.new(
+///     "Example CLI"
+///     vec![first_arg, other_arg],
+///     Some("This is some help info for this example CLI.")
+/// );
+/// ```
 pub struct CliMake {
     /// Arguments that this library parses.
     pub arguments: Vec<CliArgument>,
 
     /// Name of CLI displayed on help page.
-    pub name: String,
+    pub name: &'static str,
 
-    /// Help message, optionally provided by user.
-    pub help_str: String,
+    /// Help message that user sees on a `--help` request or if nothing is
+    /// passed/bad arguments passed.
+    ///
+    /// ## Example output
+    ///
+    /// The `A simple CLI.` in the following terminal output:
+    ///
+    /// ```none
+    /// Usage: ./climake [OPTIONS]
+    ///
+    /// A simple CLI.
+    ///
+    /// Options:
+    /// -q, -r, -s, --hi, --second | Simple help
+    /// -a, -b, -c, --other, --thing | Other help
+    ///
+    /// ```
+    pub help_str: &'static str,
 }
 
 impl CliMake {
     /// Creates a new [CliMake] from arguments and optional help.
-    pub fn new(arguments: Vec<CliArgument>, name: String, help: Option<String>) -> Self {
+    pub fn new(
+        name: &'static str,
+        arguments: Vec<CliArgument>,
+        help: Option<&'static str>,
+    ) -> Self {
         if help.is_some() {
             return CliMake {
                 arguments: arguments,
@@ -95,7 +187,7 @@ impl CliMake {
         CliMake {
             arguments: arguments,
             name: name,
-            help_str: String::from("No extra argument help provided."),
+            help_str: "No extra argument help provided.",
         }
     }
 
@@ -132,6 +224,7 @@ impl CliMake {
                         // long arg
                         let clean_arg = String::from(&arg[2..]);
                         to_run = self.search_arg(CliCallType::Long(clean_arg));
+
                         break;
                     }
                 }
@@ -229,52 +322,44 @@ mod tests {
         let cli_args = vec![
             CliArgument::new(
                 vec!['q', 'r', 's'],
-                vec![String::from("hi"), String::from("second")],
-                Some(String::from("Simple help")),
+                vec!["hi", "second"],
+                Some("Simple help"),
                 Box::new(test_func),
             ),
             CliArgument::new(
                 vec!['a', 'b', 'c'],
-                vec![String::from("other"), String::from("thing")],
-                Some(String::from("Other help")),
+                vec!["other", "thing"],
+                Some("Other help"),
                 Box::new(test_func),
             ),
         ];
-        let cli = CliMake::new(
-            cli_args,
-            String::from("Test CLI"),
-            Some(String::from("A simple CLI.")),
-        );
+        let cli = CliMake::new("Test CLI", cli_args, Some("A simple CLI."));
 
         cli.help_msg();
     }
 }
 
-fn main() {
-    /// Internal func to run for args
-    fn test_func(args: Vec<String>) {
-        println!("It works! Found args: {:?}", args);
-    }
+// fn main() {
+//     /// Internal func to run for args
+//     fn test_func(args: Vec<String>) {
+//         println!("It works! Found args: {:?}", args);
+//     }
 
-    let cli_args = vec![
-        CliArgument::new(
-            vec!['q', 'r', 's'],
-            vec![String::from("hi"), String::from("second")],
-            Some(String::from("Simple help")),
-            Box::new(test_func),
-        ),
-        CliArgument::new(
-            vec!['a', 'b', 'c'],
-            vec![String::from("other"), String::from("thing")],
-            Some(String::from("Other help")),
-            Box::new(test_func),
-        ),
-    ];
-    let cli = CliMake::new(
-        cli_args,
-        String::from("Test CLI"),
-        Some(String::from("A simple CLI.")),
-    );
+//     let cli_args = vec![
+//         CliArgument::new(
+//             vec!['q', 'r', 's'],
+//             vec!["hi", "second"],
+//             Some("Simple help"),
+//             Box::new(test_func),
+//         ),
+//         CliArgument::new(
+//             vec!['a', 'b', 'c'],
+//             vec!["other", "thing"],
+//             Some("Other help"),
+//             Box::new(test_func),
+//         ),
+//     ];
+//     let cli = CliMake::new("Test CLI", cli_args, Some("A simple CLI."));
 
-    cli.parse();
-}
+//     println!("{}", cli.help_msg());
+// }
