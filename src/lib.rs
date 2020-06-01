@@ -1,6 +1,6 @@
 //! The simple, dependancy-less cli framework ✨
 //!
-//! ## Example
+//! ## Example 📚
 //!
 //! ```rust
 //! use climake::*;
@@ -43,7 +43,7 @@
 //! }
 //! ```
 //!
-//! ## Installation
+//! ## Installation 🚀
 //!
 //! Simply add the following to your `Cargo.toml` file:
 //!
