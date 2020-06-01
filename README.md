@@ -25,20 +25,21 @@ fn main() {
         vec!['q'],
         vec!["qwerty"],
         Some("Some useful help info."),
-        Box::new(&qwerty_run_me) // this could be any closure/func with the arg being `Vec<String>`
+        Box::new(&qwerty_run_me), // this could be any closure/func with the arg being `Vec<String>`
     );
 
     let other_arg = CliArgument::new(
         vec!['o', 't'],
         vec!["other"],
         None, // no help here!
-        Box::new(&other_arg_main)
+        Box::new(&other_arg_main),
     );
 
     let cli = CliMake::new(
         vec![qwerty_arg, other_arg],
-        Some("This is some help info for this example CLI.")
-    ).unwrap();
+        Some("This is some help info for this example CLI."),
+    )
+    .unwrap();
 
     cli.parse() // runs all given parts like qwerty_run_me if called
 }
