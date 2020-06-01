@@ -4,7 +4,7 @@ description = "The simple, dependency-less cli framework ✨"
 repository = "https://gitlab.com/owez/climake"
 readme = "README.md"
 license = "MIT"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Owez <owez@scalist.net>"]
 edition = "2018"
 
