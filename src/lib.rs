@@ -219,12 +219,14 @@ impl CliMake {
     /// Parses arguments from command line and automatically runs the closures
     /// optionally given for [CliArgument] or displays help infomation.
     pub fn parse(&self) {
+        // TODO error message with help when an invalid arg is given
         let mut to_run: Option<&CliArgument> = None;
         let mut run_buffer: Vec<String> = Vec::new();
 
         let main_args = env::args();
 
         if main_args.len() == 1 {
+            // show general help and exit with code 1
             eprintln!("{}", self.help_msg());
             process::exit(1);
         }
@@ -232,6 +234,10 @@ impl CliMake {
         for (arg_ind, arg) in main_args.enumerate() {
             if arg_ind == 0 {
                 continue; // don't register first arg which gives system info
+            } else if arg_ind == 1 && (arg == String::from("--help") || arg == "-h") {
+                // show general help and exit with code 0
+                println!("{}", self.help_msg());
+                process::exit(0);
             }
 
             let mut arg_possible = false;
@@ -246,7 +252,7 @@ impl CliMake {
                         match to_run {
                             Some(r) => {
                                 if run_buffer.len() == 0 && arg == String::from("--help") {
-                                    // show arg-specific help and exit
+                                    // show arg-specific help and exit with code 0
                                     println!("{}", r.help_msg());
                                     process::exit(0);
                                 }
@@ -343,6 +349,7 @@ impl CliMake {
     /// Searches for an argument in self using a [CliCallType] as an easy way to
     /// search both short and long args.
     fn search_arg(&self, query: CliCallType) -> Option<&CliArgument> {
+        // TODO: make this into `Result<&CliArgument, CliError>` with a new CliError
         for argument in self.arguments.iter() {
             for call in argument.calls.iter() {
                 if call == &query {

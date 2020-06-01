@@ -12,7 +12,7 @@ fn qwerty_run_me(args: Vec<String>) {
     );
 }
 
-fn other_arg_main(args: Vec<String>) {
+fn other_arg_main(_args: Vec<String>) {
     println!("The normal --other or -o or -t argument.");
 }
 
