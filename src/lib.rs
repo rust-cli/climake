@@ -37,7 +37,7 @@
 //!         "Example CLI",
 //!         vec![qwerty_arg, other_arg],
 //!         Some("This is some help info for this example CLI.")
-//!     );
+//!     ).unwrap();
 //!
 //!     cli.parse() // runs all given parts like qwerty_run_me if called
 //! }
@@ -53,7 +53,17 @@
 
 #![allow(unused_assignments)] // strange rls errors for something that doesn't exist
 
-use std::env;
+use std::{env, process};
+
+/// Error enum for climake when something goes wrong, ususally when adding/parsing
+/// arguments.
+#[derive(Debug)]
+pub enum CliError {
+    /// When an argument is duplicated. For example, if you had two arguments both
+    /// with `-a` as a short call, this would raise as each arg call should be
+    /// unique.
+    ArgExists,
+}
 
 /// The way the argument is called, can short or long. This enum is made to be
 /// used in a [Vec] as then you may have multiple ways to call it.
@@ -126,6 +136,26 @@ impl CliArgument {
             run: run,
         }
     }
+
+    /// Similar to [CliMake::help_msg] but for argument-specific help.
+    pub fn help_msg(&self) -> String {
+        let cur_exe = env::current_exe();
+        let mut call_varients: Vec<String> = vec![];
+
+        for call in self.calls.iter() {
+            match call {
+                CliCallType::Long(l) => call_varients.push(format!("--{}", l)),
+                CliCallType::Short(s) => call_varients.push(format!("-{}", s)),
+            }
+        }
+
+        format!(
+            "Usage: ./{} [{}] [CONTENT]\n\nAbout:\n  {}",
+            cur_exe.unwrap().file_stem().unwrap().to_str().unwrap(),
+            call_varients.join(", "),
+            self.help_str,
+        )
+    }
 }
 
 /// Main holder structure of entire climake library, used to create new CLIs.
@@ -146,9 +176,6 @@ pub struct CliMake {
     /// Arguments that this library parses.
     pub arguments: Vec<CliArgument>,
 
-    /// Name of CLI displayed on help page.
-    pub name: &'static str,
-
     /// Help message that user sees on a `--help` request or if nothing is
     /// passed/bad arguments passed.
     ///
@@ -162,8 +189,8 @@ pub struct CliMake {
     /// A simple CLI.
     ///
     /// Options:
-    /// -q, -r, -s, --hi, --second | Simple help
-    /// -a, -b, -c, --other, --thing | Other help
+    ///   -q, -r, -s, --hi, --second | Simple help
+    ///   -a, -b, -c, --other, --thing | Other help
     ///
     /// ```
     pub help_str: &'static str,
@@ -171,24 +198,22 @@ pub struct CliMake {
 
 impl CliMake {
     /// Creates a new [CliMake] from arguments and optional help.
-    pub fn new(
-        name: &'static str,
-        arguments: Vec<CliArgument>,
-        help: Option<&'static str>,
-    ) -> Self {
-        if help.is_some() {
-            return CliMake {
-                arguments: arguments,
-                name: name,
-                help_str: help.unwrap(),
-            };
+    pub fn new(arguments: Vec<CliArgument>, help: Option<&'static str>) -> Result<Self, CliError> {
+        let clean_help = match help {
+            Some(h) => h,
+            None => "No extra argument help provided.",
+        };
+
+        let mut cli = CliMake {
+            arguments: vec![],
+            help_str: clean_help,
+        };
+
+        for arg in arguments {
+            cli.add_arg(arg)?; // prevent code dupe
         }
 
-        CliMake {
-            arguments: arguments,
-            name: name,
-            help_str: "No extra argument help provided.",
-        }
+        Ok(cli)
     }
 
     /// Parses arguments from command line and automatically runs the closures
@@ -197,7 +222,14 @@ impl CliMake {
         let mut to_run: Option<&CliArgument> = None;
         let mut run_buffer: Vec<String> = Vec::new();
 
-        for (arg_ind, arg) in env::args().enumerate() {
+        let main_args = env::args();
+
+        if main_args.len() == 1 {
+            eprintln!("{}", self.help_msg());
+            process::exit(1);
+        }
+
+        for (arg_ind, arg) in main_args.enumerate() {
             if arg_ind == 0 {
                 continue; // don't register first arg which gives system info
             }
@@ -213,6 +245,12 @@ impl CliMake {
                     } else if ind_char == 1 {
                         match to_run {
                             Some(r) => {
+                                if run_buffer.len() == 0 && arg == String::from("--help") {
+                                    // show arg-specific help and exit
+                                    println!("{}", r.help_msg());
+                                    process::exit(0);
+                                }
+
                                 // run then destroy
                                 (r.run)(run_buffer.clone());
                                 to_run = None;
@@ -261,15 +299,25 @@ impl CliMake {
     }
 
     /// Adds new argument to [CliMake]
-    pub fn add_arg(&mut self, argument: CliArgument) {
+    pub fn add_arg(&mut self, argument: CliArgument) -> Result<(), CliError> {
+        for call in argument.calls.iter() {
+            let possible_dupe = self.search_arg(call.clone());
+
+            if possible_dupe.is_some() {
+                return Err(CliError::ArgExists);
+            }
+        }
+
         self.arguments.push(argument);
+
+        Ok(())
     }
 
     /// Returns parsed help message as a [String].
     pub fn help_msg(&self) -> String {
         let cur_exe = env::current_exe();
 
-        let mut arg_help = String::new();
+        let mut arg_help: Vec<String> = vec![];
 
         for arg in self.arguments.iter() {
             let mut arg_vec = Vec::new();
@@ -281,14 +329,14 @@ impl CliMake {
                 }
             }
 
-            arg_help.push_str(&format!("{} | {}\n", arg_vec.join(", "), arg.help_str));
+            arg_help.push(format!("  {} | {}", arg_vec.join(", "), arg.help_str));
         }
 
         format!(
-            "Usage: ./{} [OPTIONS]\n\n  {}\n\nOptions:\n{}",
+            "Usage: ./{} [OPTIONS]\n\nAbout:\n  {}\n\nOptions:\n{}",
             cur_exe.unwrap().file_stem().unwrap().to_str().unwrap(),
             self.help_str,
-            arg_help
+            arg_help.join("\n")
         )
     }
 
@@ -333,33 +381,8 @@ mod tests {
                 Box::new(test_func),
             ),
         ];
-        let cli = CliMake::new("Test CLI", cli_args, Some("A simple CLI."));
+        let cli = CliMake::new(cli_args, Some("A simple CLI.")).unwrap();
 
         cli.help_msg();
     }
 }
-
-// fn main() {
-//     /// Internal func to run for args
-//     fn test_func(args: Vec<String>) {
-//         println!("It works! Found args: {:?}", args);
-//     }
-
-//     let cli_args = vec![
-//         CliArgument::new(
-//             vec!['q', 'r', 's'],
-//             vec!["hi", "second"],
-//             Some("Simple help"),
-//             Box::new(test_func),
-//         ),
-//         CliArgument::new(
-//             vec!['a', 'b', 'c'],
-//             vec!["other", "thing"],
-//             Some("Other help"),
-//             Box::new(test_func),
-//         ),
-//     ];
-//     let cli = CliMake::new("Test CLI", cli_args, Some("A simple CLI."));
-
-//     println!("{}", cli.help_msg());
-// }

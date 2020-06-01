@@ -1,10 +1,6 @@
-# climake
+//! This example is taken directly from the
+//! [climake repository](https://gitlab.com/owez/climake) `README.md`.
 
-The simple, dependancy-less cli framework ✨
-
-## Example 📚
-
-```rust
 use climake::*;
 
 /// This will be ran when the -q (or --qwerty) argument is ran. args are the
@@ -42,12 +38,3 @@ fn main() {
 
     cli.parse() // runs all given parts like qwerty_run_me if called
 }
-```
-
-## Installation 🚀
-
-Simply add the following to your `Cargo.toml` file:
-
-```toml
-climake = "1.0"
-```
