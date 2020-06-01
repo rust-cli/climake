@@ -50,5 +50,6 @@ fn main() {
 Simply add the following to your `Cargo.toml` file:
 
 ```toml
+[dependancies]
 climake = "1.0"
 ```

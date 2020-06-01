@@ -52,7 +52,11 @@
 //! climake = "1.0"
 //! ```
 
-#![allow(unused_assignments)] // strange rls errors for something that doesn't exist
+#![allow(unused_assignments)] // RLS errors, shouldn't happen but does
+#![doc(
+    html_logo_url = "https://gitlab.com/Owez/climake/raw/master/logo.png",
+    html_favicon_url = "https://gitlab.com/Owez/climake/raw/master/logo.png"
+)]
 
 use std::{env, process};
 
@@ -142,7 +146,7 @@ impl CliArgument {
     /// [CliArgument::help_str], reccomended to use.
     ///
     /// ## Example results
-    /// 
+    ///
     /// Both below are taken from the
     /// [dynamic args example](https://gitlab.com/Owez/climake/-/blob/master/examples/dynamic_args.rs):
     ///
@@ -152,7 +156,7 @@ impl CliArgument {
     /// About:
     ///   Simple help
     /// ```
-    /// 
+    ///
     /// ```none
     /// Usage: ./dynamic_args [-a, -b, -c, --other, --thing] [CONTENT]
     ///
