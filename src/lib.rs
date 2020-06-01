@@ -1,4 +1,4 @@
-//! The simple, dependancy-less cli framework ✨
+//! The simple, dependency-less cli framework ✨
 //!
 //! ## Example 📚
 //!
