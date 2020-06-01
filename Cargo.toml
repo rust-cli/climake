@@ -1,6 +1,6 @@
 [package]
 name = "climake"
-description = "A simple CLI generator using structures with no dependancies."
+description = "The simple, dependancy-less cli framework ✨"
 repository = "https://gitlab.com/owez/climake"
 readme = "README.md"
 license = "MIT"
