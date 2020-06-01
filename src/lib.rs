@@ -92,8 +92,8 @@ enum CliCallType {
 /// );
 /// ```
 pub struct CliArgument {
-    /// Inner-command help, similar to [CliMake::help_str] but only for help
-    /// regarding this argument.
+    /// Inner-command help for a specific argument. See [CliArgument::help_msg]
+    /// for a better help representation.
     pub help_str: &'static str,
 
     /// The way(s) in which you call this argument, used internally.
@@ -138,7 +138,27 @@ impl CliArgument {
         }
     }
 
-    /// Similar to [CliMake::help_msg] but for argument-specific help.
+    /// Gives in-depth details and running infomation compared to the plaintext
+    /// [CliArgument::help_str], reccomended to use.
+    ///
+    /// ## Example results
+    /// 
+    /// Both below are taken from the
+    /// [dynamic args example](https://gitlab.com/Owez/climake/-/blob/master/examples/dynamic_args.rs):
+    ///
+    /// ```none
+    /// Usage: ./dynamic_args [-q, -r, -s, --hi, --second] [CONTENT]
+    ///
+    /// About:
+    ///   Simple help
+    /// ```
+    /// 
+    /// ```none
+    /// Usage: ./dynamic_args [-a, -b, -c, --other, --thing] [CONTENT]
+    ///
+    /// About:
+    ///   Other help
+    /// ```
     pub fn help_msg(&self) -> String {
         let cur_exe = env::current_exe();
         let mut call_varients: Vec<String> = vec![];
