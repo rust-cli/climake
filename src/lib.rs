@@ -48,6 +48,7 @@
 //! Simply add the following to your `Cargo.toml` file:
 //!
 //! ```toml
+//! [dependancies]
 //! climake = "1.0"
 //! ```
 
@@ -87,7 +88,7 @@ enum CliCallType {
 ///     vec!['o', 't'],
 ///     vec!["onetwo"],
 ///     Some("This is some detailed help for onetwo"),
-///     to_run_for_onetwo
+///     Box::new(&to_run_for_onetwo)
 /// );
 /// ```
 pub struct CliArgument {
@@ -167,7 +168,6 @@ impl CliArgument {
 ///
 /// ```ignore
 /// let cli = CliMake.new(
-///     "Example CLI"
 ///     vec![first_arg, other_arg],
 ///     Some("This is some help info for this example CLI.")
 /// );
@@ -184,14 +184,14 @@ pub struct CliMake {
     /// The `A simple CLI.` in the following terminal output:
     ///
     /// ```none
-    /// Usage: ./climake [OPTIONS]
+    /// Usage: ./readme_showcase [OPTIONS]
     ///
-    /// A simple CLI.
+    /// About:
+    ///   This is some help info for this example CLI.
     ///
     /// Options:
-    ///   -q, -r, -s, --hi, --second | Simple help
-    ///   -a, -b, -c, --other, --thing | Other help
-    ///
+    ///   [-q, --qwerty] - Some useful help info.
+    ///   [-o, -t, --other] - No extra CLI help provided.
     /// ```
     pub help_str: &'static str,
 }
@@ -335,7 +335,7 @@ impl CliMake {
                 }
             }
 
-            arg_help.push(format!("  {} | {}", arg_vec.join(", "), arg.help_str));
+            arg_help.push(format!("  [{}] - {}", arg_vec.join(", "), arg.help_str));
         }
 
         format!(
