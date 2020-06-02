@@ -35,7 +35,7 @@ fn main() {
         Box::new(&other_arg_main),
     );
 
-    let cli = CliMake::new(
+    let mut cli = CliMake::new(
         vec![qwerty_arg, other_arg],
         Some("This is some help info for this example CLI."),
     )
