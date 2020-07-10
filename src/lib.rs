@@ -2,7 +2,7 @@
 //!
 //! ## Example 📚
 //!
-//! ```norun
+//! ```no_run
 //! use climake::*;
 //!
 //! /// This will be ran when the -q (or --qwerty) argument is ran. args are the
@@ -88,7 +88,7 @@ enum CliCallType {
 /// ## Example inititation
 ///
 /// ```ignore
-/// let arg_onetwo = CliArgument.new(
+/// let arg_onetwo = CliArgument::new(
 ///     vec!['o', 't'],
 ///     vec!["onetwo"],
 ///     Some("This is some detailed help for onetwo"),
