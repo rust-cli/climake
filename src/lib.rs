@@ -2,7 +2,7 @@
 //!
 //! ## Example 📚
 //!
-//! ```rust
+//! ```norun
 //! use climake::*;
 //!
 //! /// This will be ran when the -q (or --qwerty) argument is ran. args are the
