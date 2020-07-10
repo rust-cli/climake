@@ -54,8 +54,8 @@
 
 #![allow(unused_assignments)] // RLS errors, shouldn't happen but does
 #![doc(
-    html_logo_url = "https://gitlab.com/Owez/climake/raw/master/logo.png",
-    html_favicon_url = "https://gitlab.com/Owez/climake/raw/master/logo.png"
+    html_logo_url = "https://github.com/Owez/climake/raw/master/logo.png",
+    html_favicon_url = "https://github.com/Owez/climake/raw/master/logo.png"
 )]
 
 use std::{env, process};
@@ -148,7 +148,7 @@ impl CliArgument {
     /// ## Example results
     ///
     /// Both below are taken from the
-    /// [dynamic args example](https://gitlab.com/Owez/climake/-/blob/master/examples/dynamic_args.rs):
+    /// [dynamic args example](https://github.com/Owez/climake/-/blob/master/examples/dynamic_args.rs):
     ///
     /// ```none
     /// Usage: ./dynamic_args [-q, -r, -s, --hi, --second] [CONTENT]

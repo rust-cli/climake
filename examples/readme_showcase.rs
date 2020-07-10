@@ -1,5 +1,5 @@
 //! This example is taken directly from the
-//! [climake repository](https://gitlab.com/owez/climake) `README.md`.
+//! [climake repository](https://github.com/owez/climake) `README.md`.
 
 use climake::*;
 
