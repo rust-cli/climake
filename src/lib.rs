@@ -2,185 +2,168 @@
 //!
 //! ## Example 📚
 //!
-//! ```no_run
-//! use climake::*;
-//!
-//! /// This will be ran when the -q (or --qwerty) argument is ran. args are the
-//! /// arguments passed.
-//! fn qwerty_run_me(args: Vec<String>) {
-//!     println!(
-//!         "The -q (or --qwerty) argument was ran! Here are the arguments passed: {:?}.",
-//!         args
-//!     );
-//! }
-//!
-//! fn other_arg_main(_args: Vec<String>) {
-//!     println!("The normal --other or -o or -t argument.");
-//! }
-//!
-//! fn main() {
-//!     let qwerty_arg = CliArgument::new(
-//!         vec!['q'],
-//!         vec!["qwerty"],
-//!         Some("Some useful help info."),
-//!         Box::new(&qwerty_run_me), // this could be any closure/func with the arg being `Vec<String>`
-//!     );
-//!
-//!     let other_arg = CliArgument::new(
-//!         vec!['o', 't'],
-//!         vec!["other"],
-//!         None, // no help here!
-//!         Box::new(&other_arg_main),
-//!     );
-//!
-//!     let cli = CliMake::new(
-//!         vec![qwerty_arg, other_arg],
-//!         Some("This is some help info for this example CLI."),
-//!     )
-//!     .unwrap();
-//!
-//!     cli.parse() // runs all given parts like qwerty_run_me if called
-//! }
-//! ```
+//! Rewrite example coming soon!
 //!
 //! ## Installation 🚀
 //!
 //! Simply add the following to your `Cargo.toml` file:
 //!
 //! ```toml
-//! [dependancies]
-//! climake = "1.0"
+//! [dependencies]
+//! climake = "2.0" # NOTE: rewrite isn't out yet, use the normal 1.0 for the time being!
 //! ```
 
-#![allow(unused_assignments)] // RLS errors, shouldn't happen but does
 #![doc(
     html_logo_url = "https://github.com/Owez/climake/raw/master/logo.png",
     html_favicon_url = "https://github.com/Owez/climake/raw/master/logo.png"
 )]
 
-use std::{env, process};
+use std::{env, fmt, path::PathBuf, process};
 
-/// Error enum for climake when something goes wrong, ususally when adding/parsing
-/// arguments.
-#[derive(Debug)]
-pub enum CliError {
-    /// When an argument is duplicated. For example, if you had two arguments both
-    /// with `-a` as a short call, this would raise as each arg call should be
-    /// unique.
+/// The primary error enum for climake, used when an error is encountered to use
+/// downstream
+#[derive(Debug, PartialEq, Clone)]
+pub enum CLIError {
+    /// This raises when calls defined in [Argument] at compile-time
+    NoCalls,
+
+    /// An argument's call was already added to the CLI. This means a [CallType]
+    /// has been exactly duplicated for an [Argument]
     ArgExists,
+
+    /// When a referenced [CallType] could not be found.
+    ///
+    /// This is used interally inside of climake, if this is produced elsewhere
+    /// **an issue should be filed**.
+    ArgNotFound,
 }
 
-/// The way the argument is called, can short or long. This enum is made to be
-/// used in a [Vec] as then you may have multiple ways to call it.
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
-enum CliCallType {
-    /// Short call only, for example the `h` in `-hijk`.
+/// The type of data an argument accepts. The enum that hands the user's inputs
+/// to you is [PassedData], extending from [UsedArg]
+#[derive(Debug, PartialEq, Clone)]
+pub enum DataType {
+    /// Doesn't accept any data and throws an error if data is passed,
+    /// will return nothing
+    None,
+
+    /// Plaintext (typically used), will return a [String]. Errors if no data is passed
+    Text,
+
+    /// A file or directory, will return a [PathBuf]. Errors if no data is passed
+    File,
+}
+
+impl fmt::Display for DataType {
+    /// String representation of [DataType], used for downstream help messages
+    /// for individual args, see [Argument::pretty_help]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DataType::None => write!(f, ""),
+            DataType::Text => write!(f, " [TEXT]"),
+            DataType::File => write!(f, " [FILE]"),
+        }
+    }
+}
+
+/// Data collected from user input based upon wanted data from [PassedData]
+#[derive(Debug, PartialEq, Clone)]
+pub enum PassedData {
+    /// No data given. This is used when no data was given for any [DataType],
+    /// not just [DataType::None]
+    None,
+
+    /// Successfully got some text from user, will be returned if [DataType::Text]
+    /// is set for an argument
+    Text(String),
+
+    /// Successfully got a file or directory from user, will be returned if
+    /// [DataType::File] is set for an argument
+    File(PathBuf),
+}
+
+/// The ways users can call a given [Argument]
+#[derive(Debug, PartialEq, Clone)]
+pub enum CallType {
+    /// Short, 1 character long `-t`-type calls
     Short(char),
 
-    /// Long call only, for example the `qwerty` in `--qwerty`.
-    ///
-    /// Using [String] here as its much easier than trying to do &[str] lifetimes.
+    /// Long `--test`-type calls
     Long(String),
 }
 
-/// A single argument in a list of arguments to parse later in [CliMake::parse].
-///
-/// ## Example inititation
-///
-/// ```ignore
-/// let arg_onetwo = CliArgument::new(
-///     vec!['o', 't'],
-///     vec!["onetwo"],
-///     Some("This is some detailed help for onetwo"),
-///     Box::new(&to_run_for_onetwo)
-/// );
-/// ```
-pub struct CliArgument {
-    /// Inner-command help for a specific argument. See [CliArgument::help_msg]
-    /// for a better help representation.
-    pub help_str: &'static str,
+/// An allowed argument for a new CLI
+#[derive(Debug, PartialEq, Clone)]
+pub struct Argument {
+    /// Ways users can call an argument. If this is a length of 0 at compile-time,
+    /// climake will raise [CLIError::NoCalls]
+    pub calls: Vec<CallType>,
 
-    /// The way(s) in which you call this argument, used internally.
-    calls: Vec<CliCallType>,
+    /// Help message if any (will display "no help given" if nothing is shown here)
+    pub help: Option<&'static str>,
 
-    /// What to run if the argument is called. This will always pass an argument
-    /// to the runnable function which is a [Vec]<[String]> due to potential
-    /// arguments passed, used internally.
-    run: Box<dyn Fn(Vec<String>)>,
+    /// Data this argument accepts
+    pub datatype: DataType,
 }
 
-impl CliArgument {
-    /// Creates a new argument in a simplistic manner.
+impl Argument {
+    /// Shortcut method for creating an [Argument]
     pub fn new(
         short_calls: Vec<char>,
-        long_calls: Vec<&'static str>,
+        long_calls: Vec<String>,
         help: Option<&'static str>,
-        run: Box<dyn Fn(Vec<String>)>,
+        datatype: DataType,
     ) -> Self {
-        let mut calls: Vec<CliCallType> = Vec::new();
+        let mut calls: Vec<CallType> = vec![];
 
-        for short_call in short_calls {
-            calls.push(CliCallType::Short(short_call));
+        for sc in short_calls {
+            calls.push(CallType::Short(sc));
         }
 
-        for long_call in long_calls {
-            calls.push(CliCallType::Long(String::from(long_call)));
+        for lc in long_calls {
+            calls.push(CallType::Long(lc))
         }
 
-        if help.is_some() {
-            return CliArgument {
-                calls: calls,
-                help_str: help.unwrap(),
-                run: run,
-            };
-        }
-
-        CliArgument {
-            calls: calls,
-            help_str: "No extra CLI help provided.",
-            run: run,
+        Self {
+            calls,
+            help,
+            datatype,
         }
     }
 
-    /// Gives in-depth details and running infomation compared to the plaintext
-    /// [CliArgument::help_str], reccomended to use.
-    ///
-    /// ## Example results
-    ///
-    /// Both below are taken from the
-    /// [dynamic args example](https://github.com/Owez/climake/-/blob/master/examples/dynamic_args.rs):
-    ///
-    /// ```none
-    /// Usage: ./dynamic_args [-q, -r, -s, --hi, --second] [CONTENT]
-    ///
-    /// About:
-    ///   Simple help
-    /// ```
-    ///
-    /// ```none
-    /// Usage: ./dynamic_args [-a, -b, -c, --other, --thing] [CONTENT]
-    ///
-    /// About:
-    ///   Other help
-    /// ```
-    pub fn help_msg(&self) -> String {
-        let cur_exe = env::current_exe();
+    /// Creates a pretty, formatted help string for use in help messages by default
+    pub fn pretty_help(&self) -> String {
         let mut call_varients: Vec<String> = vec![];
 
         for call in self.calls.iter() {
             match call {
-                CliCallType::Long(l) => call_varients.push(format!("--{}", l)),
-                CliCallType::Short(s) => call_varients.push(format!("-{}", s)),
+                CallType::Long(l) => call_varients.push(format!("--{}", l)),
+                CallType::Short(s) => call_varients.push(format!("-{}", s)),
             }
         }
 
+        let formatted_help = match self.help {
+            Some(msg) => msg,
+            None => "No help message provided",
+        };
+
         format!(
-            "Usage: ./{} [{}] [CONTENT]\n\nAbout:\n  {}",
-            cur_exe.unwrap().file_stem().unwrap().to_str().unwrap(),
+            "\n  ({}){}: {}", // TODO: replace `[CONTENT]` with [DataType]
             call_varients.join(", "),
-            self.help_str,
+            self.datatype,
+            formatted_help,
         )
     }
+}
+
+/// Given for when a user used a valid [Argument] and any data given
+/// alongside it
+#[derive(Debug, PartialEq, Clone)]
+pub struct UsedArg {
+    /// Argument used
+    pub argument: Argument,
+
+    /// Data passed by user. See [PassedData]'s documentation for more info
+    pub passed_data: PassedData,
 }
 
 /// Main holder structure of entire climake library, used to create new CLIs.
@@ -188,64 +171,125 @@ impl CliArgument {
 /// It is reccomended this be called something simple like `cli` for ease of use
 /// as this is the most used part of climake.
 ///
-/// ## Example initiation
+/// ## Examples
 ///
-/// ```ignore
-/// let cli = CliMake.new(
-///     vec![first_arg, other_arg],
-///     Some("This is some help info for this example CLI.")
-/// );
+/// ```rust
+/// // TODO: add example from `readme_showcase.rs`
 /// ```
-pub struct CliMake {
-    /// Arguments that this library parses.
-    pub arguments: Vec<CliArgument>,
+#[derive(Debug, PartialEq, Clone)]
+pub struct CLIMake {
+    /// Arguments to use for CLI instance
+    pub args: Vec<Argument>,
 
-    /// Help message that user sees on a `--help` request or if nothing is
-    /// passed/bad arguments passed.
+    /// Optional description of CLI
+    pub description: Option<&'static str>,
+
+    /// Optional version of CLI/program
     ///
-    /// ## Example output
+    /// ## Finding your crate's version
     ///
-    /// The `A simple CLI.` in the following terminal output:
+    /// You can use the following snippet to find out your crates version:
     ///
-    /// ```none
-    /// Usage: ./readme_showcase [OPTIONS]
-    ///
-    /// About:
-    ///   This is some help info for this example CLI.
-    ///
-    /// Options:
-    ///   [-q, --qwerty] - Some useful help info.
-    ///   [-o, -t, --other] - No extra CLI help provided.
+    /// ```rust
+    /// #[macro_export]
+    /// macro_rules! crate_version {
+    ///     () => {
+    ///         format!("{}.{}.{}{}",
+    ///         env!("CARGO_PKG_VERSION_MAJOR"),
+    ///         env!("CARGO_PKG_VERSION_MINOR"),
+    ///         env!("CARGO_PKG_VERSION_PATCH"),
+    ///         option_env!("CARGO_PKG_VERSION_PRE").unwrap_or(""))
+    ///     }
+    /// }
     /// ```
-    pub help_str: &'static str,
+    ///
+    /// *Taken from [clap's `crate_version`](https://docs.rs/clap/2.33.3/clap/macro.crate_version.html)*
+    pub version: Option<String>,
 }
 
-impl CliMake {
-    /// Creates a new [CliMake] from arguments and optional help.
-    pub fn new(arguments: Vec<CliArgument>, help: Option<&'static str>) -> Result<Self, CliError> {
-        let clean_help = match help {
-            Some(h) => h,
-            None => "No extra argument help provided.",
-        };
-
-        let mut cli = CliMake {
-            arguments: vec![],
-            help_str: clean_help,
-        };
-
-        for arg in arguments {
-            cli.add_arg(arg)?; // prevent code dupe
+impl CLIMake {
+    /// Shortcut to making a [CLIMake] structure, the main entrypoint into
+    /// building a CLI with climake
+    pub fn new(
+        args: Vec<Argument>,
+        description: Option<&'static str>,
+        version: Option<String>,
+    ) -> Self {
+        Self {
+            args,
+            description,
+            version,
         }
-
-        Ok(cli)
     }
 
-    /// Parses arguments from command line and automatically runs the closures
-    /// optionally given for [CliArgument] or displays help infomation.
-    pub fn parse(&self) {
-        // TODO error message with help when an invalid arg is given
-        let mut to_run: Option<&CliArgument> = None;
-        let mut run_buffer: Vec<String> = Vec::new();
+    /// Header message to be used above help or errors to show the CLI has been
+    /// at least successfully initiated and to show basic info about the program
+    fn header_msg(&self) -> String {
+        let cur_exe = env::current_exe();
+
+        let topline = format!(
+            "Usage: ./{} [OPTIONS]",
+            cur_exe.unwrap().file_stem().unwrap().to_str().unwrap()
+        );
+
+        match self.description {
+            Some(description) => match self.version.clone() {
+                Some(version) => format!("{}\n\n  v{} - {}", topline, version, description),
+                None => format!("{}\n\n  {}", topline, description),
+            },
+            None => format!("{}\n\n", topline),
+        }
+    }
+
+    /// Overall help for built CLI, displays header and each args [Argument::pretty_help]
+    fn help_msg(&self) -> String {
+        let mut output = format!("{}\n\nOptions:", self.header_msg());
+
+        for arg in &self.args {
+            output += &arg.pretty_help();
+        }
+
+        output
+    }
+
+    /// Produces a [Argument::pretty_help] with CLI's header to be used for
+    /// arg-specific help messages
+    fn specific_help(&self, call: CallType) -> Result<String, CLIError> {
+        format!("{}\n\n{}", self.header_msg(), self.search_arg(call)?.pretty_help())
+    }
+
+    /// Adds new argument to instanced cli
+    pub fn add_arg(&mut self, arg: Argument) -> Result<(), CLIError> {
+        for call in arg.calls.iter() {
+            match self.search_arg(call.clone()) {
+                Ok(_) => return Err(CLIError::ArgExists),
+                Err(_) => ()
+            }; // searches for dupes, essentially turns [CLIMake::search_arg] around
+        }
+
+        self.args.push(arg);
+
+        Ok(())
+    }
+    /// Searches for an argument in self using a [CallType] as an easy way to
+    /// search both short and long args.
+    fn search_arg(&self, query: CallType) -> Result<&Argument, CLIError> {
+        // TODO: make this into `Result<&CliArgument, CliError>` with a new CliError
+        for arg in self.args.iter() {
+            for call in arg.calls.iter() {
+                if call == &query {
+                    return Ok(&arg);
+                }
+            }
+        }
+
+        Err(CLIError::ArgNotFound)
+    }
+
+    /// Parses arguments and returns all [UsedArg]s
+    pub fn parse(&self) -> Vec<UsedArg> {
+        let mut found_args: Vec<Argument> = Vec::new();
+        let mut arg_buffer = String::new();
 
         let main_args = env::args();
 
@@ -256,6 +300,8 @@ impl CliMake {
         }
 
         for (arg_ind, arg) in main_args.enumerate() {
+            // splitted space
+
             if arg_ind == 0 {
                 continue; // don't register first arg which gives system info
             } else if arg_ind == 1 && (arg == String::from("--help") || arg == "-h") {
@@ -264,125 +310,40 @@ impl CliMake {
                 process::exit(0);
             }
 
-            let mut arg_possible = false;
+            let mut arg_possible = false; // switches to smartly detect `-`/`--`
 
             for (ind_char, character) in arg.chars().enumerate() {
+                // each char in block of non-space chars
+
                 if character == '-' {
                     if ind_char == 0 {
                         // possible short arg
                         arg_possible = true;
                         continue;
                     } else if ind_char == 1 {
-                        match to_run {
-                            Some(r) => {
-                                if run_buffer.len() == 0 && arg == String::from("--help") {
+                        // possible long arg or possible start of short args
+                        if arg == String::from("--help") {
+                            match found_args.last() {
+                                Some(arg) => {
                                     // show arg-specific help and exit with code 0
-                                    println!("{}", r.help_msg());
+                                    println!("{}", self.specific_help(arg)?); // TODO: figure out arg not found error
                                     process::exit(0);
                                 }
-
-                                // run then destroy
-                                (r.run)(run_buffer.clone());
-                                to_run = None;
-                                run_buffer.drain(..);
+                                None => (),
                             }
-                            None => (),
                         }
-
-                        // long arg
-                        let clean_arg = String::from(&arg[2..]);
-                        to_run = self.search_arg(CliCallType::Long(clean_arg));
-
-                        break;
                     }
                 }
-
-                if arg_possible {
-                    match to_run {
-                        Some(r) => {
-                            // run then destroy
-                            (r.run)(run_buffer.clone());
-
-                            to_run = None;
-                            run_buffer.drain(..);
-                        }
-                        None => (),
-                    }
-
-                    // short arg
-                    to_run = self.search_arg(CliCallType::Short(character));
-                } else {
-                    // content of other arg
-                    run_buffer.push(arg);
-                    break;
-                }
-            }
-
-            if arg_ind + 1 == env::args().len() {
-                // last arg, call any remaining to_run + run_buffer
-                match to_run {
-                    Some(r) => (r.run)(run_buffer.clone()),
-                    None => (),
-                }
-            }
-        }
-    }
-
-    /// Adds new argument to [CliMake]
-    pub fn add_arg(&mut self, argument: CliArgument) -> Result<(), CliError> {
-        for call in argument.calls.iter() {
-            let possible_dupe = self.search_arg(call.clone());
-
-            if possible_dupe.is_some() {
-                return Err(CliError::ArgExists);
             }
         }
 
-        self.arguments.push(argument);
+        let mut converted_used = vec![];
 
-        Ok(())
-    }
-
-    /// Returns parsed help message as a [String].
-    pub fn help_msg(&self) -> String {
-        let cur_exe = env::current_exe();
-
-        let mut arg_help: Vec<String> = vec![];
-
-        for arg in self.arguments.iter() {
-            let mut arg_vec = Vec::new();
-
-            for call in arg.calls.iter() {
-                match call {
-                    CliCallType::Long(l) => arg_vec.push(format!("--{}", l)),
-                    CliCallType::Short(s) => arg_vec.push(format!("-{}", s)),
-                }
-            }
-
-            arg_help.push(format!("  [{}] - {}", arg_vec.join(", "), arg.help_str));
+        for arg in found_args {
+            converted_used.push(UsedArg { })
         }
 
-        format!(
-            "Usage: ./{} [OPTIONS]\n\nAbout:\n  {}\n\nOptions:\n{}",
-            cur_exe.unwrap().file_stem().unwrap().to_str().unwrap(),
-            self.help_str,
-            arg_help.join("\n")
-        )
-    }
-
-    /// Searches for an argument in self using a [CliCallType] as an easy way to
-    /// search both short and long args.
-    fn search_arg(&self, query: CliCallType) -> Option<&CliArgument> {
-        // TODO: make this into `Result<&CliArgument, CliError>` with a new CliError
-        for argument in self.arguments.iter() {
-            for call in argument.calls.iter() {
-                if call == &query {
-                    return Some(&argument);
-                }
-            }
-        }
-
-        None
+        converted_used
     }
 }
 
@@ -390,29 +351,68 @@ impl CliMake {
 mod tests {
     use super::*;
 
-    /// Ensures help message displays without errors.
+    /// Ensures header message displays without errors.
     #[test]
-    fn help_msg() {
-        /// Internal func to run for args
-        fn test_func(args: Vec<String>) {
-            println!("It works! Found args: {:?}", args);
-        }
+    fn check_header() {
+        let cli = CLIMake::new(vec![], Some("A simple CLI."), None);
 
+        cli.header_msg();
+    }
+
+    /// Tests individual arg's `pretty_help` message
+    #[test]
+    fn check_arg_help() {
         let cli_args = vec![
-            CliArgument::new(
+            Argument::new(
                 vec!['q', 'r', 's'],
-                vec!["hi", "second"],
+                vec![String::from("hi"), String::from("second")],
                 Some("Simple help"),
-                Box::new(test_func),
+                DataType::None,
             ),
-            CliArgument::new(
+            Argument::new(
                 vec!['a', 'b', 'c'],
-                vec!["other", "thing"],
+                vec![String::from("other"), String::from("thing")],
                 Some("Other help"),
-                Box::new(test_func),
+                DataType::None,
+            ),
+            Argument::new(
+                vec!['o'],
+                vec![String::from("third"), String::from("arg")],
+                Some("A simple third arg"),
+                DataType::None,
             ),
         ];
-        let cli = CliMake::new(cli_args, Some("A simple CLI.")).unwrap();
+
+        for arg in cli_args {
+            arg.pretty_help();
+        }
+    }
+
+    /// Checks that the cli can parse a full help message (headers + each bit of
+    /// content) without panicing. Uses same args as the [check_arg_help] test
+    #[test]
+    fn cli_full_help() {
+        let cli_args = vec![
+            Argument::new(
+                vec!['q', 'r', 's'],
+                vec![String::from("hi"), String::from("second")],
+                Some("Simple help"),
+                DataType::None,
+            ),
+            Argument::new(
+                vec!['a', 'b', 'c'],
+                vec![String::from("other"), String::from("thing")],
+                Some("Other help"),
+                DataType::None,
+            ),
+            Argument::new(
+                vec!['o'],
+                vec![String::from("third"), String::from("arg")],
+                Some("A simple third arg"),
+                DataType::None,
+            ),
+        ];
+        let cli = CLIMake::new(cli_args, Some("A simple debug cli"), None);
 
         cli.help_msg();
     }
