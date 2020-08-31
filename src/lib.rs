@@ -147,7 +147,7 @@ impl Argument {
         };
 
         format!(
-            "\n  ({}){}: {}", // TODO: replace `[CONTENT]` with [DataType]
+            "\n  ({}){}: {}",
             call_varients.join(", "),
             self.datatype,
             formatted_help,
@@ -284,7 +284,6 @@ impl CLIMake {
     /// Searches for an argument in self using a [CallType] as an easy way to
     /// search both short and long args.
     fn search_arg(&self, query: CallType) -> Result<&Argument, CLIError> {
-        // TODO: make this into `Result<&CliArgument, CliError>` with a new CliError
         for arg in self.args.iter() {
             for call in arg.calls.iter() {
                 if call == &query {
