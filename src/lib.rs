@@ -74,11 +74,11 @@ pub enum PassedData {
 
     /// Successfully got some text from user, will be returned if [DataType::Text]
     /// is set for an argument
-    Text(String),
+    Text(Vec<String>),
 
     /// Successfully got a file or directory from user, will be returned if
     /// [DataType::File] is set for an argument
-    File(PathBuf),
+    File(Vec<PathBuf>),
 }
 
 /// The ways users can call a given [Argument]
@@ -113,7 +113,7 @@ impl Argument {
         help: Option<&'static str>,
         datatype: DataType,
     ) -> Self {
-        let mut calls: Vec<CallType> = vec![];
+        let mut calls: Vec<CallType> = Vec::new();
 
         for sc in short_calls {
             calls.push(CallType::Short(sc));
@@ -132,7 +132,7 @@ impl Argument {
 
     /// Creates a pretty, formatted help string for use in help messages by default
     pub fn pretty_help(&self) -> String {
-        let mut call_varients: Vec<String> = vec![];
+        let mut call_varients: Vec<String> = Vec::new();
 
         for call in self.calls.iter() {
             match call {
@@ -252,10 +252,20 @@ impl CLIMake {
         output
     }
 
+    /// Shortcut to providing help message and exiting with error code 1
+    fn error_help(&self) -> ! {
+        eprintln!("{}", self.help_msg());
+        process::exit(1);
+    }
+
     /// Produces a [Argument::pretty_help] with CLI's header to be used for
     /// arg-specific help messages
     fn specific_help(&self, call: CallType) -> Result<String, CLIError> {
-        format!("{}\n\n{}", self.header_msg(), self.search_arg(call)?.pretty_help())
+        format!(
+            "{}\n\n{}",
+            self.header_msg(),
+            self.search_arg(call)?.pretty_help()
+        )
     }
 
     /// Adds new argument to instanced cli
@@ -263,7 +273,7 @@ impl CLIMake {
         for call in arg.calls.iter() {
             match self.search_arg(call.clone()) {
                 Ok(_) => return Err(CLIError::ArgExists),
-                Err(_) => ()
+                Err(_) => (),
             }; // searches for dupes, essentially turns [CLIMake::search_arg] around
         }
 
@@ -288,62 +298,89 @@ impl CLIMake {
 
     /// Parses arguments and returns all [UsedArg]s
     pub fn parse(&self) -> Vec<UsedArg> {
-        let mut found_args: Vec<Argument> = Vec::new();
-        let mut arg_buffer = String::new();
+        let mut args_output: Vec<UsedArg> = Vec::new();
 
-        let main_args = env::args();
+        let mut tmp_arg_data: Vec<String> = Vec::new();
+        let mut tmp_arg: Option<&Argument> = None;
 
-        if main_args.len() == 1 {
-            // show general help and exit with code 1
-            eprintln!("{}", self.help_msg());
-            process::exit(1);
+        let passed_args = env::args();
+
+        if passed_args.len() == 1 {
+            self.error_help();
         }
 
-        for (arg_ind, arg) in main_args.enumerate() {
-            // splitted space
+        for (arg_ind, arg) in passed_args.enumerate() {
+            // each full arg
 
             if arg_ind == 0 {
-                continue; // don't register first arg which gives system info
-            } else if arg_ind == 1 && (arg == String::from("--help") || arg == "-h") {
-                // show general help and exit with code 0
+                continue; // don't register sysinfo arg
+            } else if arg_ind == 1 && (arg == "--help" || arg == "-h") {
+                // asked for help, return help with code 0
                 println!("{}", self.help_msg());
                 process::exit(0);
             }
 
-            let mut arg_possible = false; // switches to smartly detect `-`/`--`
+            let mut arg_possible = false; // flips to detect - or -- args
 
-            for (ind_char, character) in arg.chars().enumerate() {
-                // each char in block of non-space chars
+            for (char_ind, character) in arg.chars().enumerate() {
+                // each letter of arg
 
                 if character == '-' {
-                    if ind_char == 0 {
-                        // possible short arg
+                    if char_ind == 0 {
+                        // possible short or long arg
                         arg_possible = true;
                         continue;
-                    } else if ind_char == 1 {
-                        // possible long arg or possible start of short args
-                        if arg == String::from("--help") {
-                            match found_args.last() {
-                                Some(arg) => {
-                                    // show arg-specific help and exit with code 0
-                                    println!("{}", self.specific_help(arg)?); // TODO: figure out arg not found error
-                                    process::exit(0);
-                                }
-                                None => (),
-                            }
-                        }
+                    } else if char_ind == 1 {
+                        // long arg, add to
+                        let stripped_arg = String::from(&arg[2..]);
+
+                        tmp_arg = match self.search_arg(CallType::Long(stripped_arg)) {
+                            Ok(x) => Some(x),
+                            Err(_) => self.error_help(),
+                        };
+
+                        break;
                     }
                 }
             }
+
+            if arg_possible {
+                match tmp_arg {
+                    Some(a) => {
+                        // add arg to output then reset temps
+
+                        // TODO: make this into a new [UsedArg::new()]
+                        let raw_data = tmp_arg_data.clone();
+
+                        args_output.push(match a.datatype {
+                            DataType::None => UsedArg {
+                                argument: *a,
+                                passed_data: PassedData::None,
+                            },
+                            DataType::Text => UsedArg {
+                                argument: *a,
+                                passed_data: PassedData::Text(raw_data),
+                            },
+                            DataType::File => UsedArg {
+                                argument: *a,
+                                passed_data: PassedData::File(
+                                    raw_data
+                                        .iter()
+                                        .map(|&x| PathBuf::from(x))
+                                        .collect::<Vec<PathBuf>>(),
+                                ),
+                            },
+                        });
+
+                        tmp_arg = None;
+                        tmp_arg_data.drain(..);
+                    }
+                    None => (),
+                };
+            }
         }
 
-        let mut converted_used = vec![];
-
-        for arg in found_args {
-            converted_used.push(UsedArg { })
-        }
-
-        converted_used
+        args_output
     }
 }
 
@@ -354,7 +391,7 @@ mod tests {
     /// Ensures header message displays without errors.
     #[test]
     fn check_header() {
-        let cli = CLIMake::new(vec![], Some("A simple CLI."), None);
+        let cli = CLIMake::new(Vec::new(), Some("A simple CLI."), None);
 
         cli.header_msg();
     }
