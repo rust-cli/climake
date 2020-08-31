@@ -261,11 +261,11 @@ impl CLIMake {
     /// Produces a [Argument::pretty_help] with CLI's header to be used for
     /// arg-specific help messages
     fn specific_help(&self, call: CallType) -> Result<String, CLIError> {
-        format!(
+        Ok(format!(
             "{}\n\n{}",
             self.header_msg(),
             self.search_arg(call)?.pretty_help()
-        )
+        ))
     }
 
     /// Adds new argument to instanced cli
@@ -349,24 +349,25 @@ impl CLIMake {
                     Some(a) => {
                         // add arg to output then reset temps
 
+                        // TODO: add specific arg help here
                         // TODO: make this into a new [UsedArg::new()]
                         let raw_data = tmp_arg_data.clone();
 
                         args_output.push(match a.datatype {
                             DataType::None => UsedArg {
-                                argument: *a,
+                                argument: a.clone(), // TODO: find way to move instead of clone
                                 passed_data: PassedData::None,
                             },
                             DataType::Text => UsedArg {
-                                argument: *a,
+                                argument: a.clone(), // TODO: find way to move instead of clone
                                 passed_data: PassedData::Text(raw_data),
                             },
                             DataType::File => UsedArg {
-                                argument: *a,
+                                argument: a.clone(), // TODO: find way to move instead of clone
                                 passed_data: PassedData::File(
                                     raw_data
                                         .iter()
-                                        .map(|&x| PathBuf::from(x))
+                                        .map(|x| PathBuf::from(x))
                                         .collect::<Vec<PathBuf>>(),
                                 ),
                             },
