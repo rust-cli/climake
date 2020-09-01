@@ -1,4 +1,4 @@
-//! The simple, dependency-less cli framework ✨
+//! The simple, dependency-less cli library ✨
 //!
 //! ## Example 📚
 //!
@@ -10,7 +10,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! climake = "2.0" # NOTE: rewrite isn't out yet, use the normal 1.0 for the time being!
+//! climake = "2.0"
 //! ```
 
 #![doc(

@@ -1,6 +1,6 @@
 [package]
 name = "climake"
-description = "The simple, dependency-less cli framework ✨"
+description = "The simple, dependency-less cli library ✨"
 repository = "https://github.com/owez/climake"
 readme = "README.md"
 license = "MIT"
