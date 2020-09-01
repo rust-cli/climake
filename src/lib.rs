@@ -166,6 +166,31 @@ pub struct UsedArg {
     pub passed_data: PassedData,
 }
 
+impl UsedArg {
+    /// Private shortcut creation method for [UsedArg] to be used inside of parsing
+    fn new(arg: Argument, raw_data: Vec<String>) -> Self {
+        match arg.datatype {
+            DataType::None => Self {
+                argument: arg,
+                passed_data: PassedData::None,
+            },
+            DataType::Text => Self {
+                argument: arg,
+                passed_data: PassedData::Text(raw_data),
+            },
+            DataType::File => Self {
+                argument: arg,
+                passed_data: PassedData::File(
+                    raw_data
+                        .iter()
+                        .map(|x| PathBuf::from(x))
+                        .collect::<Vec<PathBuf>>(),
+                ),
+            },
+        }
+    }
+}
+
 /// Main holder structure of entire climake library, used to create new CLIs.
 ///
 /// It is reccomended this be called something simple like `cli` for ease of use
@@ -349,28 +374,8 @@ impl CLIMake {
                         // add arg to output then reset temps
 
                         // TODO: add specific arg help here
-                        // TODO: make this into a new [UsedArg::new()]
-                        let raw_data = tmp_arg_data.clone();
-
-                        args_output.push(match a.datatype {
-                            DataType::None => UsedArg {
-                                argument: a.clone(), // TODO: find way to move instead of clone
-                                passed_data: PassedData::None,
-                            },
-                            DataType::Text => UsedArg {
-                                argument: a.clone(), // TODO: find way to move instead of clone
-                                passed_data: PassedData::Text(raw_data),
-                            },
-                            DataType::File => UsedArg {
-                                argument: a.clone(), // TODO: find way to move instead of clone
-                                passed_data: PassedData::File(
-                                    raw_data
-                                        .iter()
-                                        .map(|x| PathBuf::from(x))
-                                        .collect::<Vec<PathBuf>>(),
-                                ),
-                            },
-                        });
+                        // TODO: find way to move instead of clone
+                        args_output.push(UsedArg::new(a.clone(), tmp_arg_data.clone()));
 
                         tmp_arg = None;
                         tmp_arg_data.drain(..);
