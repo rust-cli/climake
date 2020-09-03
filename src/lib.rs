@@ -285,12 +285,8 @@ impl CLIMake {
 
     /// Produces a [Argument::pretty_help] with CLI's header to be used for
     /// arg-specific help messages
-    fn specific_help(&self, call: CallType) -> Result<String, CLIError> {
-        Ok(format!(
-            "{}\n\n{}",
-            self.header_msg(),
-            self.search_arg(call)?.pretty_help()
-        ))
+    fn specific_help(&self, arg: &Argument) -> String {
+        format!("{}Arg help:{}", self.header_msg(), arg.pretty_help())
     }
 
     /// Adds new argument to instanced cli
@@ -356,6 +352,19 @@ impl CLIMake {
                         continue;
                     } else if char_ind == 1 {
                         // long arg, add to
+
+                        match tmp_arg {
+                            Some(ta) => {
+                                if tmp_arg_data.len() == 0 && arg == String::from("--help") {
+                                    // show arg-specific help and exit with code 0
+
+                                    println!("{}", self.specific_help(ta));
+                                    process::exit(0);
+                                }
+                            }
+                            None => (),
+                        };
+
                         let stripped_arg = String::from(&arg[2..]);
 
                         tmp_arg = match self.search_arg(CallType::Long(stripped_arg)) {
@@ -373,8 +382,6 @@ impl CLIMake {
                     Some(a) => {
                         // add arg to output then reset temps
 
-                        // TODO: add specific arg help here
-                        // TODO: find way to move instead of clone
                         args_output.push(UsedArg::new(a.clone(), tmp_arg_data.clone()));
 
                         tmp_arg = None;
@@ -457,5 +464,17 @@ mod tests {
         let cli = CLIMake::new(cli_args, Some("A simple debug cli"), None);
 
         cli.help_msg();
+    }
+
+    /// Checks that args return proper specific help messages
+    #[test]
+    fn specific_arg_help() {
+        const TRUE_HELP: &str =
+            "Usage: ./climake-36019eba5d59df32 [OPTIONS]\n\nArg help:\n  (-t): Specific help";
+
+        let arg = Argument::new(vec!['t'], vec![], Some("Specific help"), DataType::None);
+        let cli = CLIMake::new(vec![arg.clone()], None, None);
+
+        assert_eq!(cli.specific_help(&arg), TRUE_HELP);
     }
 }
