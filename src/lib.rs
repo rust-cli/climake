@@ -302,6 +302,7 @@ impl CLIMake {
 
         Ok(())
     }
+
     /// Searches for an argument in self using a [CallType] as an easy way to
     /// search both short and long args.
     fn search_arg(&self, query: CallType) -> Result<&Argument, CLIError> {
