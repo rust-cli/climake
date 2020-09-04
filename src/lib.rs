@@ -12,16 +12,16 @@
 //!             vec![String::from("output"), String::from("out")],
 //!             Some("Example output arg"),
 //!             DataType::File,
-//!         ),
+//!         ).unwrap(),
 //!         Argument::new(
 //!             vec!['a', 'b', 'c'],
 //!             vec![],
 //!             Some("Alphabet!"),
 //!             DataType::None,
-//!         ),
+//!         ).unwrap(),
 //!     ];
 //!
-//!     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None);
+//!     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
 //!
 //!     println!("Args used:\n{:#?}", cli.parse());
 //! }
@@ -135,7 +135,11 @@ impl Argument {
         long_calls: Vec<String>,
         help: Option<&'static str>,
         datatype: DataType,
-    ) -> Self {
+    ) -> Result<Self, CLIError> {
+        if short_calls.len() + long_calls.len() == 0 {
+            return Err(CLIError::NoCalls);
+        }
+
         let mut calls: Vec<CallType> = Vec::new();
 
         for sc in short_calls {
@@ -146,11 +150,11 @@ impl Argument {
             calls.push(CallType::Long(lc))
         }
 
-        Self {
+        Ok(Self {
             calls,
             help,
             datatype,
-        }
+        })
     }
 
     /// Creates a pretty, formatted help string for use in help messages by default
@@ -231,16 +235,16 @@ impl UsedArg {
 ///             vec![String::from("output"), String::from("out")],
 ///             Some("Example output arg"),
 ///             DataType::File,
-///         ),
+///         ).unwrap(),
 ///         Argument::new(
 ///             vec!['a', 'b', 'c'],
 ///             vec![],
 ///             Some("Alphabet!"),
 ///             DataType::None,
-///         ),
+///         ).unwrap(),
 ///     ];
 ///
-///     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None);
+///     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
 ///
 ///     println!("Args used:\n{:#?}", cli.parse());
 /// }
@@ -283,12 +287,18 @@ impl CLIMake {
         args: Vec<Argument>,
         description: Option<&'static str>,
         version: Option<String>,
-    ) -> Self {
-        Self {
-            args,
+    ) -> Result<Self, CLIError> {
+        let mut cli = Self {
+            args: vec![],
             description,
             version,
+        };
+
+        for arg in args {
+            cli.add_arg(arg)?;
         }
+
+        Ok(cli)
     }
 
     /// Header message to be used above help or errors to show the CLI has been
@@ -476,7 +486,7 @@ mod tests {
     /// binary name*
     #[test]
     fn check_header() {
-        let cli = CLIMake::new(Vec::new(), Some("A simple CLI."), None);
+        let cli = CLIMake::new(Vec::new(), Some("A simple CLI."), None).unwrap();
 
         cli.header_msg();
     }
@@ -489,14 +499,16 @@ mod tests {
             vec![String::from("hi"), String::from("second")],
             Some("Simple help"),
             DataType::None,
-        );
+        )
+        .unwrap();
         let arg_2 = Argument::new(
             vec!['a', 'b', 'c'],
             vec![String::from("other"), String::from("thing")],
             Some("Other help"),
             DataType::None,
-        );
-        let arg_3 = Argument::new(vec!['o'], vec![], None, DataType::None);
+        )
+        .unwrap();
+        let arg_3 = Argument::new(vec!['o'], vec![], None, DataType::None).unwrap();
 
         assert_eq!(
             arg_1.pretty_help(),
@@ -521,15 +533,17 @@ mod tests {
                 vec![String::from("hi")],
                 Some("Simple help"),
                 DataType::None,
-            ),
+            )
+            .unwrap(),
             Argument::new(
                 vec!['o'],
                 vec![String::from("2nd"), String::from("arg")],
                 Some("A simple second arg"),
                 DataType::None,
-            ),
+            )
+            .unwrap(),
         ];
-        let cli = CLIMake::new(cli_args, Some("A simple debug cli"), None);
+        let cli = CLIMake::new(cli_args, Some("A simple debug cli"), None).unwrap();
 
         assert_eq!(remove_lines(cli.help_msg(), 2), TRUE_HELP);
     }
@@ -539,9 +553,23 @@ mod tests {
     fn specific_arg_help() {
         const TRUE_HELP: &str = "Arg help:\n  (-t): Specific help";
 
-        let arg = Argument::new(vec!['t'], vec![], Some("Specific help"), DataType::None);
-        let cli = CLIMake::new(vec![arg.clone()], None, None);
+        let arg = Argument::new(vec!['t'], vec![], Some("Specific help"), DataType::None).unwrap();
+        let cli = CLIMake::new(vec![arg.clone()], None, None).unwrap();
 
         assert_eq!(remove_lines(cli.specific_help(&arg), 4), TRUE_HELP);
+    }
+
+    /// Makes sure that passing no calltypes to an argument, e.g. `vec![], vec![]`
+    /// will return a [CLIError::NoCalls]
+    #[test]
+    #[should_panic]
+    fn ensure_nocalls_error() {
+        Argument::new(
+            vec![],
+            vec![],
+            Some("This should return a CLIError::NoCalls once added to cli"),
+            DataType::None,
+        )
+        .unwrap();
     }
 }
