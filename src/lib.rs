@@ -198,8 +198,29 @@ impl UsedArg {
 ///
 /// ## Examples
 ///
-/// ```rust
-/// // TODO: add example from `readme_showcase.rs`
+/// ```should_panic
+/// use climake::{Argument, CLIMake, DataType};
+///
+/// fn main() {
+///     let args = vec![
+///         Argument::new(
+///             vec!['o'],
+///             vec![String::from("output"), String::from("out")],
+///             Some("Example output arg"),
+///             DataType::File,
+///         ),
+///         Argument::new(
+///             vec!['a', 'b', 'c'],
+///             vec![],
+///             Some("Alphabet!"),
+///             DataType::None,
+///         ),
+///     ];
+///
+///     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None);
+///
+///     println!("Args used:\n{:#?}", cli.parse());
+/// }
 /// ```
 #[derive(Debug, PartialEq, Clone)]
 pub struct CLIMake {
@@ -356,9 +377,8 @@ impl CLIMake {
 
                         match tmp_arg {
                             Some(ta) => {
+                                // show arg-specific help and exit with code 0
                                 if tmp_arg_data.len() == 0 && arg == String::from("--help") {
-                                    // show arg-specific help and exit with code 0
-
                                     println!("{}", self.specific_help(ta));
                                     process::exit(0);
                                 }
@@ -376,20 +396,37 @@ impl CLIMake {
                         break;
                     }
                 }
+
+                if arg_possible {
+                    match tmp_arg {
+                        Some(a) => {
+                            // add arg to output then drain data
+
+                            args_output.push(UsedArg::new(a.clone(), tmp_arg_data.clone()));
+                            tmp_arg_data.drain(..);
+                        }
+                        None => (),
+                    };
+
+                    // possible short arg, just search and if it isn't, leave it the same
+                    tmp_arg = match self.search_arg(CallType::Short(character)) {
+                        Ok(x) => Some(x),
+                        Err(_) => None,
+                    };
+                } else {
+                    tmp_arg_data.push(arg.clone());
+                    break;
+                }
             }
 
-            if arg_possible {
+            if arg_ind + 1 == env::args().len() {
                 match tmp_arg {
                     Some(a) => {
-                        // add arg to output then reset temps
-
-                        args_output.push(UsedArg::new(a.clone(), tmp_arg_data.clone()));
-
-                        tmp_arg = None;
-                        tmp_arg_data.drain(..);
+                        args_output.push(UsedArg::new(a.clone(), tmp_arg_data));
+                        break; // used so no cloning of `tmp_arg_data`
                     }
                     None => (),
-                };
+                }
             }
         }
 

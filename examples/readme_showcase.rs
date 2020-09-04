@@ -18,5 +18,5 @@ fn main() {
 
     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None);
 
-    cli.parse(); // TODO: Finish off parsing example
+    println!("Args used:\n{:#?}", cli.parse());
 }
