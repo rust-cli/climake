@@ -542,6 +542,6 @@ mod tests {
         let arg = Argument::new(vec!['t'], vec![], Some("Specific help"), DataType::None);
         let cli = CLIMake::new(vec![arg.clone()], None, None);
 
-        assert_eq!(remove_lines(cli.specific_help(&arg), 2), TRUE_HELP);
+        assert_eq!(remove_lines(cli.specific_help(&arg), 4), TRUE_HELP);
     }
 }
