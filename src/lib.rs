@@ -299,15 +299,18 @@ impl CLIMake {
     }
 
     /// Shortcut to providing help message and exiting with error code 1
-    fn error_help(&self) -> ! {
-        eprintln!("{}", self.help_msg());
+    fn error_help(&self, msg: Option<&str>) -> ! {
+        match msg {
+            Some(m) => eprintln!("Error: {}\n{}", m, self.help_msg()),
+            None => eprintln!("{}", self.help_msg()),
+        };
         process::exit(1);
     }
 
     /// Produces a [Argument::pretty_help] with CLI's header to be used for
     /// arg-specific help messages
     fn specific_help(&self, arg: &Argument) -> String {
-        format!("{}Arg help:{}", self.header_msg(), arg.pretty_help())
+        format!("{}\n\nArg help:{}", self.header_msg(), arg.pretty_help())
     }
 
     /// Adds new argument to instanced cli
@@ -348,7 +351,7 @@ impl CLIMake {
         let passed_args = env::args();
 
         if passed_args.len() == 1 {
-            self.error_help();
+            self.error_help(Some("No arguments given"));
         }
 
         for (arg_ind, arg) in passed_args.enumerate() {
@@ -390,7 +393,7 @@ impl CLIMake {
 
                         tmp_arg = match self.search_arg(CallType::Long(stripped_arg)) {
                             Ok(x) => Some(x),
-                            Err(_) => self.error_help(),
+                            Err(_) => self.error_help(Some("Unknown long arg")),
                         };
 
                         break;
@@ -411,7 +414,7 @@ impl CLIMake {
                     // possible short arg, just search and if it isn't, leave it the same
                     tmp_arg = match self.search_arg(CallType::Short(character)) {
                         Ok(x) => Some(x),
-                        Err(_) => None,
+                        Err(_) => self.error_help(Some("Unknown short arg")),
                     };
                 } else {
                     tmp_arg_data.push(arg.clone());
