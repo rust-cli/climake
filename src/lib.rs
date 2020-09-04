@@ -572,4 +572,20 @@ mod tests {
         )
         .unwrap();
     }
+
+    /// Makes sure that giving duplicated arguments with same call types will
+    /// result in a [CLIError::ArgExists]
+    #[test]
+    #[should_panic]
+    fn ensure_dupe_error() {
+        let org_arg = Argument::new(
+            vec!['d'],
+            vec![String::from("dupecall")],
+            None,
+            DataType::None,
+        )
+        .unwrap();
+
+        CLIMake::new(vec![org_arg.clone(), org_arg], None, None).unwrap(); // will fail with cloned org_arg
+    }
 }
