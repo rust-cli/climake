@@ -1,10 +1,10 @@
 [package]
 name = "climake"
-description = "The simple, dependency-less cli framework ✨"
+description = "The simple, dependency-less cli library ✨"
 repository = "https://github.com/owez/climake"
 readme = "README.md"
 license = "MIT"
-version = "1.0.3"
+version = "2.0.0"
 authors = ["Owez <owez@scalist.net>"]
 edition = "2018"
 
