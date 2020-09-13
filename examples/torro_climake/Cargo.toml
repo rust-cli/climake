@@ -1,0 +1,9 @@
+[package]
+name = "torro_climake"
+version = "0.1.0"
+authors = ["Owez <root@ogriffiths.com>"]
+edition = "2018"
+
+[dependencies]
+climake = { path = "../../../climake" }
+torro = { git = "https://github.com/owez/torro" }
