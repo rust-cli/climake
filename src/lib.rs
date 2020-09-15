@@ -303,7 +303,7 @@ impl CLIMake {
 
     /// Header message to be used above help or errors to show the CLI has been
     /// at least successfully initiated and to show basic info about the program
-    fn header_msg(&self) -> String {
+    pub fn header_msg(&self) -> String {
         let cur_exe = env::current_exe();
 
         let topline = format!(
@@ -320,8 +320,9 @@ impl CLIMake {
         }
     }
 
-    /// Overall help for built CLI, displays header and each args [Argument::pretty_help]
-    fn help_msg(&self) -> String {
+    /// Overall help for built CLI, displays header and every arg
+    /// using [Argument::pretty_help]
+    pub fn help_msg(&self) -> String {
         let mut output = format!("{}\n\nOptions:", self.header_msg());
 
         for arg in &self.args {
@@ -342,7 +343,7 @@ impl CLIMake {
 
     /// Produces a [Argument::pretty_help] with CLI's header to be used for
     /// arg-specific help messages
-    fn specific_help(&self, arg: &Argument) -> String {
+    pub fn specific_help(&self, arg: &Argument) -> String {
         format!("{}\n\nArg help:{}", self.header_msg(), arg.pretty_help())
     }
 
@@ -467,125 +468,5 @@ impl CLIMake {
         }
 
         args_output
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// Internal helper for tests that removes first `lines` lines from given
-    /// [String] `input`
-    fn remove_lines(input: String, lines: usize) -> String {
-        input.split("\n").collect::<Vec<&str>>()[lines..].join("\n")
-    }
-
-    /// Ensures header message displays without errors.
-    ///
-    /// *This is not checked with any [assert_eq] as header messages change with
-    /// binary name*
-    #[test]
-    fn check_header() {
-        let cli = CLIMake::new(Vec::new(), Some("A simple CLI."), None).unwrap();
-
-        cli.header_msg();
-    }
-
-    /// Tests individual arg's `pretty_help` message
-    #[test]
-    fn check_arg_help() {
-        let arg_1 = Argument::new(
-            vec!['q', 'r', 's'],
-            vec![String::from("hi"), String::from("second")],
-            Some("Simple help"),
-            DataType::None,
-        )
-        .unwrap();
-        let arg_2 = Argument::new(
-            vec!['a', 'b', 'c'],
-            vec![String::from("other"), String::from("thing")],
-            Some("Other help"),
-            DataType::None,
-        )
-        .unwrap();
-        let arg_3 = Argument::new(vec!['o'], vec![], None, DataType::None).unwrap();
-
-        assert_eq!(
-            arg_1.pretty_help(),
-            "\n  (-q, -r, -s, --hi, --second): Simple help"
-        );
-        assert_eq!(
-            arg_2.pretty_help(),
-            "\n  (-a, -b, -c, --other, --thing): Other help"
-        );
-        assert_eq!(arg_3.pretty_help(), "\n  (-o): No help message provided");
-    }
-
-    /// Checks that the cli can parse a full help message compared to a correct
-    /// help message
-    #[test]
-    fn cli_full_help() {
-        const TRUE_HELP: &str = "  A simple debug cli\n\nOptions:\n  (-q, -r, --hi): Simple help\n  (-o, --2nd, --arg): A simple second arg";
-
-        let cli_args = vec![
-            Argument::new(
-                vec!['q', 'r'],
-                vec![String::from("hi")],
-                Some("Simple help"),
-                DataType::None,
-            )
-            .unwrap(),
-            Argument::new(
-                vec!['o'],
-                vec![String::from("2nd"), String::from("arg")],
-                Some("A simple second arg"),
-                DataType::None,
-            )
-            .unwrap(),
-        ];
-        let cli = CLIMake::new(cli_args, Some("A simple debug cli"), None).unwrap();
-
-        assert_eq!(remove_lines(cli.help_msg(), 2), TRUE_HELP);
-    }
-
-    /// Checks that args return proper specific help messages
-    #[test]
-    fn specific_arg_help() {
-        const TRUE_HELP: &str = "Arg help:\n  (-t): Specific help";
-
-        let arg = Argument::new(vec!['t'], vec![], Some("Specific help"), DataType::None).unwrap();
-        let cli = CLIMake::new(vec![arg.clone()], None, None).unwrap();
-
-        assert_eq!(remove_lines(cli.specific_help(&arg), 4), TRUE_HELP);
-    }
-
-    /// Makes sure that passing no calltypes to an argument, e.g. `vec![], vec![]`
-    /// will return a [CLIError::NoCalls]
-    #[test]
-    #[should_panic]
-    fn ensure_nocalls_error() {
-        Argument::new(
-            vec![],
-            vec![],
-            Some("This should return a CLIError::NoCalls once added to cli"),
-            DataType::None,
-        )
-        .unwrap();
-    }
-
-    /// Makes sure that giving duplicated arguments with same call types will
-    /// result in a [CLIError::ArgExists]
-    #[test]
-    #[should_panic]
-    fn ensure_dupe_error() {
-        let org_arg = Argument::new(
-            vec!['d'],
-            vec![String::from("dupecall")],
-            None,
-            DataType::None,
-        )
-        .unwrap();
-
-        CLIMake::new(vec![org_arg.clone(), org_arg], None, None).unwrap(); // will fail with cloned org_arg
     }
 }
