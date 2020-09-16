@@ -84,6 +84,6 @@ fn main() {
             PassedData::File(files) => do_bencode(files[0].clone()),
             _ => panic!(),
         },
-        None => (), // skip, no `-t` arg passed
+        None => (), // skip, no `-b` arg passed
     }
 }
