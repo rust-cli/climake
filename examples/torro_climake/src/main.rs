@@ -3,15 +3,15 @@ use torro::torrent::Torrent;
 
 fn main() {
     let torrent_arg = Argument::new(
-        vec!['t', 'f'],
-        vec![String::from("torrent"), String::from("file")],
+        &['t', 'f'],
+        &["torrent", "file"],
         Some("A .torrent file to download"),
         DataType::File,
     )
     .unwrap();
 
     let cli = CLIMake::new(
-        vec![torrent_arg.clone()],
+        &[torrent_arg.clone()],
         Some("OTorrent, a micro torrent client"),
         None,
     )
