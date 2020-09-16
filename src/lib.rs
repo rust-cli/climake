@@ -106,34 +106,34 @@ pub enum PassedData {
 
 /// The ways users can call a given [Argument]
 #[derive(Debug, PartialEq, Clone)]
-pub enum CallType {
+pub enum CallType<'a> {
     /// Short, 1 character long `-t`-type calls
     Short(char),
 
     /// Long `--test`-type calls
-    Long(String),
+    Long(&'a str),
 }
 
 /// An allowed argument for a new CLI
 #[derive(Debug, PartialEq, Clone)]
-pub struct Argument {
+pub struct Argument<'a> {
     /// Ways users can call an argument. If this is a length of 0 at compile-time,
     /// climake will raise [CLIError::NoCalls]
-    pub calls: Vec<CallType>,
+    pub calls: Vec<CallType<'a>>,
 
     /// Help message if any (will display "no help given" if nothing is shown here)
-    pub help: Option<&'static str>,
+    pub help: Option<&'a str>,
 
     /// Data this argument accepts
     pub datatype: DataType,
 }
 
-impl Argument {
+impl<'a> Argument<'a> {
     /// Shortcut method for creating an [Argument]
     pub fn new(
-        short_calls: Vec<char>,
-        long_calls: Vec<String>,
-        help: Option<&'static str>,
+        short_calls: &[char],
+        long_calls: &[&'a str],
+        help: Option<&'a str>,
         datatype: DataType,
     ) -> Result<Self, CLIError> {
         if short_calls.len() + long_calls.len() == 0 {
@@ -143,7 +143,7 @@ impl Argument {
         let mut calls: Vec<CallType> = Vec::new();
 
         for sc in short_calls {
-            calls.push(CallType::Short(sc));
+            calls.push(CallType::Short(*sc));
         }
 
         for lc in long_calls {
@@ -185,17 +185,17 @@ impl Argument {
 /// Given for when a user used a valid [Argument] and any data given
 /// alongside it
 #[derive(Debug, PartialEq, Clone)]
-pub struct UsedArg {
+pub struct UsedArg<'a> {
     /// Argument used
-    pub argument: Argument,
+    pub argument: Argument<'a>,
 
     /// Data passed by user. See [PassedData]'s documentation for more info
     pub passed_data: PassedData,
 }
 
-impl UsedArg {
+impl<'a> UsedArg<'a> {
     /// Private shortcut creation method for [UsedArg] to be used inside of parsing
-    fn new(arg: Argument, raw_data: Vec<String>) -> Self {
+    fn new(arg: Argument<'a>, raw_data: Vec<String>) -> Self {
         match arg.datatype {
             DataType::None => Self {
                 argument: arg,
@@ -250,9 +250,9 @@ impl UsedArg {
 /// }
 /// ```
 #[derive(Debug, PartialEq, Clone)]
-pub struct CLIMake {
+pub struct CLIMake<'cli, 'a> {
     /// Arguments to use for CLI instance
-    pub args: Vec<Argument>,
+    pub args: &'cli [Argument<'a>],
 
     /// Optional description of CLI
     pub description: Option<&'static str>,
@@ -280,25 +280,23 @@ pub struct CLIMake {
     pub version: Option<String>,
 }
 
-impl CLIMake {
+impl<'cli, 'a> CLIMake<'cli, 'a> {
     /// Shortcut to making a [CLIMake] structure, the main entrypoint into
     /// building a CLI with climake
     pub fn new(
-        args: Vec<Argument>,
+        args: &'cli [Argument<'a>],
         description: Option<&'static str>,
         version: Option<String>,
     ) -> Result<Self, CLIError> {
-        let mut cli = Self {
-            args: vec![],
-            description,
-            version,
-        };
-
-        for arg in args {
-            cli.add_arg(arg)?;
+        if slice_has_dup(args) {
+            return Err(CLIError::ArgExists);
         }
 
-        Ok(cli)
+        Ok(Self {
+            args: args,
+            description,
+            version,
+        })
     }
 
     /// Header message to be used above help or errors to show the CLI has been
@@ -325,7 +323,7 @@ impl CLIMake {
     pub fn help_msg(&self) -> String {
         let mut output = format!("{}\n\nOptions:", self.header_msg());
 
-        for arg in &self.args {
+        for arg in self.args {
             output += &arg.pretty_help();
         }
 
@@ -345,20 +343,6 @@ impl CLIMake {
     /// arg-specific help messages
     pub fn specific_help(&self, arg: &Argument) -> String {
         format!("{}\n\nArg help:{}", self.header_msg(), arg.pretty_help())
-    }
-
-    /// Adds new argument to instanced cli
-    pub fn add_arg(&mut self, arg: Argument) -> Result<(), CLIError> {
-        for call in arg.calls.iter() {
-            match self.search_arg(call.clone()) {
-                Ok(_) => return Err(CLIError::ArgExists),
-                Err(_) => (),
-            }; // searches for dupes, essentially turns [CLIMake::search_arg] around
-        }
-
-        self.args.push(arg);
-
-        Ok(())
     }
 
     /// Searches for an argument in self using a [CallType] as an easy way to
@@ -423,9 +407,7 @@ impl CLIMake {
                             None => (),
                         };
 
-                        let stripped_arg = String::from(&arg[2..]);
-
-                        tmp_arg = match self.search_arg(CallType::Long(stripped_arg)) {
+                        tmp_arg = match self.search_arg(CallType::Long(&arg[2..])) {
                             Ok(x) => Some(x),
                             Err(_) => self.error_help(Some("Unknown long arg")),
                         };
@@ -469,4 +451,14 @@ impl CLIMake {
 
         args_output
     }
+}
+
+/// Checks for duplications, used for [CLIMake::new] arguments
+fn slice_has_dup<T: PartialEq>(slice: &[T]) -> bool {
+    for i in 1..slice.len() {
+        if slice[i..].contains(&slice[i - 1]) {
+            return true;
+        }
+    }
+    false
 }
