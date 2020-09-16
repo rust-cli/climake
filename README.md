@@ -37,3 +37,7 @@ Simply add the following to your `Cargo.toml` file:
 [dependencies]
 climake = "2.1"
 ```
+
+## License
+
+Duel-licensed under both the [MIT License](https://opensource.org/licenses/MIT) ([`LICENSE-MIT`](LICENSE-MIT)) and [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0) ([`LICENSE-APACHE`](LICENSE-APACHE)), you may choose at your discretion.
