@@ -293,7 +293,7 @@ impl<'cli, 'a> CLIMake<'cli, 'a> {
         }
 
         Ok(Self {
-            args: args,
+            args,
             description,
             version,
         })
