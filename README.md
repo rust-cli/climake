@@ -2,6 +2,9 @@
 
 The simple, dependency-less cli library ✨
 
+- [Crates.io](https://crates.io/crates/climake)
+- [Documentation](https://docs.rs/climake)
+
 ## Example 📚
 
 ```rust
