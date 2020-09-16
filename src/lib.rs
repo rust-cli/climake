@@ -229,16 +229,16 @@ impl<'a> UsedArg<'a> {
 /// use climake::{Argument, CLIMake, DataType};
 ///
 /// fn main() {
-///     let args = vec![
+///     let args = &[
 ///         Argument::new(
-///             vec!['o'],
-///             vec![String::from("output"), String::from("out")],
+///             &['o'],
+///             &["output", "out"],
 ///             Some("Example output arg"),
 ///             DataType::File,
 ///         ).unwrap(),
 ///         Argument::new(
-///             vec!['a', 'b', 'c'],
-///             vec![],
+///             &['a', 'b', 'c'],
+///             &[],
 ///             Some("Alphabet!"),
 ///             DataType::None,
 ///         ).unwrap(),
