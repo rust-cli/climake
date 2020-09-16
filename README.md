@@ -8,16 +8,16 @@ The simple, dependency-less cli library ✨
 use climake::{Argument, CLIMake, DataType};
 
 fn main() {
-    let args = vec![
+    let args = &[
         Argument::new(
-            vec!['o'],
-            vec![String::from("output"), String::from("out")],
+            &['o'],
+            &["output", "out"],
             Some("Example output arg"),
             DataType::File,
         ).unwrap(),
         Argument::new(
-            vec!['a', 'b', 'c'],
-            vec![],
+            &['a', 'b', 'c'],
+            &[],
             Some("Alphabet!"),
             DataType::None,
         ).unwrap(),
@@ -35,5 +35,5 @@ Simply add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-climake = "2.0"
+climake = "2.1"
 ```

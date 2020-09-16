@@ -8,7 +8,7 @@ use climake::CLIMake;
 /// binary name*
 #[test]
 fn check_header() {
-    let cli = CLIMake::new(Vec::new(), Some("A simple CLI."), None).unwrap();
+    let cli = CLIMake::new(&[], Some("A simple CLI."), None).unwrap();
 
     cli.header_msg();
 }

@@ -12,20 +12,20 @@ fn remove_lines(input: String, lines: usize) -> String {
 #[test]
 fn check_arg_help() {
     let arg_1 = Argument::new(
-        vec!['q', 'r', 's'],
-        vec![String::from("hi"), String::from("second")],
+        &['q', 'r', 's'],
+        &["hi", "second"],
         Some("Simple help"),
         DataType::None,
     )
     .unwrap();
     let arg_2 = Argument::new(
-        vec!['a', 'b', 'c'],
-        vec![String::from("other"), String::from("thing")],
+        &['a', 'b', 'c'],
+        &["other", "thing"],
         Some("Other help"),
         DataType::None,
     )
     .unwrap();
-    let arg_3 = Argument::new(vec!['o'], vec![], None, DataType::None).unwrap();
+    let arg_3 = Argument::new(&['o'], &[], None, DataType::None).unwrap();
 
     assert_eq!(
         arg_1.pretty_help(),
@@ -44,17 +44,11 @@ fn check_arg_help() {
 fn cli_full_help() {
     const TRUE_HELP: &str = "  A simple debug cli\n\nOptions:\n  (-q, -r, --hi): Simple help\n  (-o, --2nd, --arg): A simple second arg";
 
-    let cli_args = vec![
+    let cli_args = &[
+        Argument::new(&['q', 'r'], &["hi"], Some("Simple help"), DataType::None).unwrap(),
         Argument::new(
-            vec!['q', 'r'],
-            vec![String::from("hi")],
-            Some("Simple help"),
-            DataType::None,
-        )
-        .unwrap(),
-        Argument::new(
-            vec!['o'],
-            vec![String::from("2nd"), String::from("arg")],
+            &['o'],
+            &["2nd", "arg"],
             Some("A simple second arg"),
             DataType::None,
         )
@@ -70,8 +64,10 @@ fn cli_full_help() {
 fn specific_arg_help() {
     const TRUE_HELP: &str = "Arg help:\n  (-t): Specific help";
 
-    let arg = Argument::new(vec!['t'], vec![], Some("Specific help"), DataType::None).unwrap();
-    let cli = CLIMake::new(vec![arg.clone()], None, None).unwrap();
+    let arg = Argument::new(&['t'], &[], Some("Specific help"), DataType::None).unwrap();
+    let args = &[arg.clone()];
+
+    let cli = CLIMake::new(args, None, None).unwrap();
 
     assert_eq!(remove_lines(cli.specific_help(&arg), 4), TRUE_HELP);
 }
