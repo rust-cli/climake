@@ -47,7 +47,8 @@ use std::{env, fmt, path::PathBuf, process};
 /// downstream
 #[derive(Debug, PartialEq, Clone)]
 pub enum CLIError {
-    /// This raises when calls defined in [Argument] at compile-time
+    /// This raises when there are no calls defined in a given [Argument] when
+    /// creating using [Argument::new]
     NoCalls,
 
     /// An argument's call was already added to the CLI. This means a [CallType]
