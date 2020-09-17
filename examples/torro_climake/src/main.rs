@@ -1,4 +1,4 @@
-use climake::{Argument, CLIError, CLIMake, DataType, PassedData};
+use climake::{Argument, CLIMake, DataType, PassedData};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
