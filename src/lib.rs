@@ -332,10 +332,9 @@ impl<'cli, 'a> CLIMake<'cli, 'a> {
     /// using [Argument::pretty_help]
     pub fn help_msg(&self) -> String {
         let mut output = format!("{}\n\nOptions:", self.header_msg());
-
-        for arg in self.args {
-            output += &arg.pretty_help();
-        }
+        self.args
+            .iter()
+            .for_each(|arg| output += &arg.pretty_help());
 
         output
     }
