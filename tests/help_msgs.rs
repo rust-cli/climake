@@ -29,11 +29,11 @@ fn check_arg_help() {
 
     assert_eq!(
         arg_1.pretty_help(),
-        "\n  (-q, -r, -s, --hi, --second): Simple help"
+        "\n  (-qrs, --hi, --second): Simple help"
     );
     assert_eq!(
         arg_2.pretty_help(),
-        "\n  (-a, -b, -c, --other, --thing): Other help"
+        "\n  (-abc, --other, --thing): Other help"
     );
     assert_eq!(arg_3.pretty_help(), "\n  (-o): No help message provided");
 }
@@ -42,7 +42,7 @@ fn check_arg_help() {
 /// help message
 #[test]
 fn cli_full_help() {
-    const TRUE_HELP: &str = "  A simple debug cli\n\nOptions:\n  (-q, -r, --hi): Simple help\n  (-o, --2nd, --arg): A simple second arg";
+    const TRUE_HELP: &str = "  A simple debug cli\n\nOptions:\n  (-qr, --hi): Simple help\n  (-o, --2nd, --arg): A simple second arg";
 
     let cli_args = &[
         Argument::new(&['q', 'r'], &["hi"], Some("Simple help"), DataType::None).unwrap(),
