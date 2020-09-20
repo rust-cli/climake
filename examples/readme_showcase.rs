@@ -6,7 +6,7 @@ fn main() {
             &['o'],
             &["output", "out"],
             Some("Example output arg"),
-            DataType::File,
+            DataType::Files,
         ).unwrap(),
         Argument::new(
             &['a', 'b', 'c'],

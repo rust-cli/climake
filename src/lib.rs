@@ -11,7 +11,7 @@
 //!             &['o'],
 //!             &["output", "out"],
 //!             Some("Example output arg"),
-//!             DataType::File,
+//!             DataType::Files,
 //!         ).unwrap(),
 //!         Argument::new(
 //!             &['a', 'b', 'c'],
@@ -244,7 +244,7 @@ impl<'a> UsedArg<'a> {
 ///             &['o'],
 ///             &["output", "out"],
 ///             Some("Example output arg"),
-///             DataType::File,
+///             DataType::Files,
 ///         ).unwrap(),
 ///         Argument::new(
 ///             &['a', 'b', 'c'],
