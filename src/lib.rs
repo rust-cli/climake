@@ -73,8 +73,8 @@ pub enum DataType {
     /// Plaintext (typically used), will return a [String]
     Text,
 
-    /// A file or directory, will return a [PathBuf]
-    File,
+    /// Multiple files or directories, will return a [Vec]<[PathBuf]>
+    Files,
 }
 
 impl fmt::Display for DataType {
@@ -84,7 +84,7 @@ impl fmt::Display for DataType {
         match self {
             DataType::None => write!(f, ""),
             DataType::Text => write!(f, " [TEXT]"),
-            DataType::File => write!(f, " [FILE]"),
+            DataType::Files => write!(f, " [FILES]"),
         }
     }
 }
@@ -101,8 +101,8 @@ pub enum PassedData {
     Text(Vec<String>),
 
     /// Successfully got a file or directory from user, will be returned if
-    /// [DataType::File] is set for an argument
-    File(Vec<PathBuf>),
+    /// [DataType::Files] is set for an argument
+    Files(Vec<PathBuf>),
 }
 
 /// The ways users can call a given [Argument]
@@ -143,13 +143,12 @@ impl<'a> Argument<'a> {
 
         let mut calls: Vec<CallType> = Vec::new();
 
-        for sc in short_calls {
-            calls.push(CallType::Short(*sc));
-        }
-
-        for lc in long_calls {
-            calls.push(CallType::Long(lc))
-        }
+        short_calls
+            .iter()
+            .for_each(|sc| calls.push(CallType::Short(*sc)));
+        long_calls
+            .iter()
+            .for_each(|lc| calls.push(CallType::Long(lc)));
 
         Ok(Self {
             calls,
@@ -216,9 +215,9 @@ impl<'a> UsedArg<'a> {
                 argument: arg,
                 passed_data: PassedData::Text(raw_data),
             },
-            DataType::File => Self {
+            DataType::Files => Self {
                 argument: arg,
-                passed_data: PassedData::File(
+                passed_data: PassedData::Files(
                     raw_data
                         .iter()
                         .map(|x| PathBuf::from(x))
