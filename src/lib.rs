@@ -160,14 +160,24 @@ impl<'a> Argument<'a> {
 
     /// Creates a pretty, formatted help string for use in help messages by default
     pub fn pretty_help(&self) -> String {
-        let mut call_varients: Vec<String> = Vec::new();
+        let mut lc_buf: Vec<String> = Vec::new();
+        let mut sc_buf: Vec<char> = Vec::new();
 
         for call in self.calls.iter() {
             match call {
-                CallType::Long(l) => call_varients.push(format!("--{}", l)),
-                CallType::Short(s) => call_varients.push(format!("-{}", s)),
+                CallType::Long(l) => lc_buf.push(format!("--{}", l)),
+                CallType::Short(s) => sc_buf.push(*s),
             }
         }
+
+        let short_calls: String = if sc_buf.len() == 0 {
+            String::new()
+        } else {
+            format!("-{}", sc_buf.iter().collect::<String>())
+        };
+
+        let mut formatted_calls = vec![short_calls];
+        formatted_calls.append(&mut lc_buf);
 
         let formatted_help = match self.help {
             Some(msg) => msg,
@@ -176,7 +186,7 @@ impl<'a> Argument<'a> {
 
         format!(
             "\n  ({}){}: {}",
-            call_varients.join(", "),
+            formatted_calls.join(", "),
             self.datatype,
             formatted_help,
         )
@@ -247,7 +257,7 @@ impl<'a> UsedArg<'a> {
 ///
 ///     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
 ///
-///     println!("Args used:\n{:#?}", cli.parse());
+///     println!("Args used: {:#?}", cli.parse());
 /// }
 /// ```
 #[derive(Debug, PartialEq, Clone)]
@@ -373,9 +383,8 @@ impl<'cli, 'a> CLIMake<'cli, 'a> {
             self.error_help(Some("No arguments given"));
         }
 
+        // each full arg
         for (arg_ind, arg) in passed_args.enumerate() {
-            // each full arg
-
             if arg_ind == 0 {
                 continue; // don't register sysinfo arg
             } else if arg_ind == 1 && (arg == "--help" || arg == "-h") {
@@ -386,17 +395,15 @@ impl<'cli, 'a> CLIMake<'cli, 'a> {
 
             let mut arg_possible = false; // flips to detect - or -- args
 
+            // each letter of arg
             for (char_ind, character) in arg.chars().enumerate() {
-                // each letter of arg
-
                 if character == '-' {
                     if char_ind == 0 {
                         // possible short or long arg
                         arg_possible = true;
                         continue;
                     } else if char_ind == 1 {
-                        // long arg, add to
-
+                        // long arg
                         match tmp_arg {
                             Some(ta) => {
                                 // show arg-specific help and exit with code 0
@@ -421,7 +428,6 @@ impl<'cli, 'a> CLIMake<'cli, 'a> {
                     match tmp_arg {
                         Some(a) => {
                             // add arg to output then drain data
-
                             args_output.push(UsedArg::new(a.clone(), tmp_arg_data.clone()));
                             tmp_arg_data.drain(..);
                         }
