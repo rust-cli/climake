@@ -33,12 +33,12 @@
 //!
 //! ```toml
 //! [dependencies]
-//! climake = "2.0"
+//! climake = "2.1"
 //! ```
 
 #![doc(
-    html_logo_url = "https://github.com/Owez/climake/raw/master/logo.png",
-    html_favicon_url = "https://github.com/Owez/climake/raw/master/logo.png"
+    html_logo_url = "https://github.com/rust-cli/climake/raw/master/logo.png",
+    html_favicon_url = "https://github.com/rust-cli/climake/raw/master/logo.png"
 )]
 
 use std::{env, fmt, path::PathBuf, process};
