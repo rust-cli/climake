@@ -23,7 +23,7 @@
 //!
 //!     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
 //!
-//!     println!("Args used:\n{:#?}", cli.parse());
+//!     println!("Args used: {:#?}", cli.parse());
 //! }
 //! ```
 //!
