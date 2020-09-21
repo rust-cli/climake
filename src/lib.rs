@@ -19,6 +19,7 @@ pub enum AllowedData {
     Files(Vec<PathBuf>),
 }
 
+// TODO: docstring
 pub struct Argument<'arg> {
     pub short_calls: &'arg [char],
     pub long_calls: &'arg [&'arg str],
