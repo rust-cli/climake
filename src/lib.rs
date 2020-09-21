@@ -57,6 +57,23 @@ impl<'arg> Argument<'arg> {
             format!("({})", output_buf.join(", "))
         }
     }
+
+    /// Makes broad, chainable (for many arguments) help for this argument,
+    /// designed to be used for an overall program help message, instead of the
+    /// more focused [Argument::specific_help]
+    fn broad_help(&self) -> String {
+        let arg_combinations = self.help_combinations();
+
+        unimplemented!();
+    }
+
+    /// Makes specific help for this argument. This is different to
+    /// [Argument::broad_help] as this method has an unrestricted character limit.
+    fn specific_help(&self) -> String {
+        let arg_combinations = self.help_combinations();
+
+        unimplemented!();
+    }
 }
 
 // TODO: docstring
