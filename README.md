@@ -7,30 +7,7 @@ The simple, dependency-less cli library ✨
 
 ## Example 📚
 
-```rust
-use climake::{Argument, CLIMake, DataType};
-
-fn main() {
-    let args = &[
-        Argument::new(
-            &['o'],
-            &["output", "out"],
-            Some("Example output arg"),
-            DataType::Files,
-        ).unwrap(),
-        Argument::new(
-            &['a', 'b', 'c'],
-            &[],
-            Some("Alphabet!"),
-            DataType::None,
-        ).unwrap(),
-    ];
-
-    let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
-
-    println!("Args used: {:#?}", cli.parse());
-}
-```
+Rewrite example coming soon!
 
 ## Installation 🚀
 
@@ -38,7 +15,7 @@ Simply add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-climake = "2.1"
+climake = "3.0" # note: rewrite isn't out just yet!
 ```
 
 ## License

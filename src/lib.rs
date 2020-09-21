@@ -1,3 +1,10 @@
+//! The simple, dependency-less cli library ✨
+
+#![doc(
+    html_logo_url = "https://github.com/rust-cli/climake/raw/master/logo.png",
+    html_favicon_url = "https://github.com/rust-cli/climake/raw/master/logo.png"
+)]
+
 use std::path::PathBuf;
 
 // TODO: docstring
@@ -12,12 +19,44 @@ pub enum AllowedData {
     Files(Vec<PathBuf>),
 }
 
-// TODO: docstring
 pub struct Argument<'arg> {
-    pub short_calls: Vec<char>,
-    pub long_calls: Vec<&'arg str>,
+    pub short_calls: &'arg [char],
+    pub long_calls: &'arg [&'arg str],
     pub help: Option<&'arg str>,
     pub allowed_data: AllowedData,
+}
+
+impl<'arg> Argument<'arg> {
+    /// Shortcut to creating a new [Argument]
+    pub fn new(
+        short_calls: &'arg [char],
+        long_calls: &'arg [&'arg str],
+        help: Option<&'arg str>,
+        allowed_data: AllowedData,
+    ) -> Self {
+        Self {
+            short_calls,
+            long_calls,
+            help,
+            allowed_data,
+        }
+    }
+
+    /// Makes properly-formatted call combinations like `(-xyz, --foo, --bar)`
+    fn help_combinations(&self) -> String {
+        let mut fmt_long_calls = self.long_calls.join(", ");
+
+        if self.short_calls.len() == 0 {
+            format!("({})", fmt_long_calls)
+        } else {
+            // TODO: find a nicer way to do this
+            let output_buf = vec![
+                format!("-{}", self.short_calls.iter().collect::<String>()),
+                fmt_long_calls,
+            ];
+            format!("({})", output_buf.join(", "))
+        }
+    }
 }
 
 // TODO: docstring
@@ -75,5 +114,14 @@ impl<'cli, 'cmd, 'arg> CliMake<'cli, 'cmd, 'arg> {
     /// Parses arguments, the main duty of climake
     pub fn parse(&mut self) -> ! {
         unimplemented!();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    /// Tests that [Argument::help_combinations] works correctly
+    #[test]
+    fn arg_help_combinations() {
+        // TODO
     }
 }
