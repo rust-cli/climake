@@ -45,7 +45,12 @@ impl<'arg> Argument<'arg> {
 
     /// Makes properly-formatted call combinations like `(-xyz, --foo, --bar)`
     fn help_combinations(&self) -> String {
-        let mut fmt_long_calls = self.long_calls.join(", ");
+        let fmt_long_calls = self
+            .long_calls
+            .iter()
+            .map(|c| format!("--{}", c))
+            .collect::<Vec<String>>()
+            .join(", ");
 
         if self.short_calls.len() == 0 {
             format!("({})", fmt_long_calls)
@@ -137,9 +142,19 @@ impl<'cli, 'cmd, 'arg> CliMake<'cli, 'cmd, 'arg> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     /// Tests that [Argument::help_combinations] works correctly
     #[test]
     fn arg_help_combinations() {
-        // TODO
+        assert_eq!(
+            Argument::new(&['f', 'o', 'o'], &["foo", "bar"], None, AllowedData::None)
+                .help_combinations(),
+            String::from("(-foo, --foo, --bar)")
+        );
+        assert_eq!(
+            Argument::new(&['x'], &["x"], None, AllowedData::None).help_combinations(),
+            String::from("(-x, --x)")
+        );
     }
 }
