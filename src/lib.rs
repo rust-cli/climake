@@ -7,11 +7,13 @@
 
 use std::path::PathBuf;
 
-// TODO: docstring
+/// The type of data that the end-user is allowed to enter into the CLI prompt.
+/// The [AllowedData::Plaintext] option is the most common choice for this task
 pub enum AllowedData {
-    /// No allowed data
+    /// No allowed data. This can be useful for arg boolean flags or a custom
+    /// "allow `-y` to be optionally entered when `-x` is entered"
     None,
-    /// Plaintext
+    /// Plaintext string of normal characters
     Plaintext(String),
     /// Single file
     File(PathBuf),
