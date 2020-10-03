@@ -43,20 +43,6 @@
 
 use std::{env, fmt, path::PathBuf, process};
 
-/// Finds and correctly formats your crate's version, used primarily for providing
-/// version infomation inside of [CliMake]
-///
-/// *Taken from [clap's `crate_version`](https://docs.rs/clap/2.33.3/clap/macro.crate_version.html)*
-pub fn crate_version() -> String {
-    format!(
-        "{}.{}.{}{}",
-        env!("CARGO_PKG_VERSION_MAJOR"),
-        env!("CARGO_PKG_VERSION_MINOR"),
-        env!("CARGO_PKG_VERSION_PATCH"),
-        option_env!("CARGO_PKG_VERSION_PRE").unwrap_or("")
-    )
-}
-
 /// The primary error enum for climake, used when an error is encountered to use
 /// downstream
 #[derive(Debug, PartialEq, Clone)]
@@ -285,8 +271,21 @@ pub struct CliMake<'cli, 'a> {
     ///
     /// ## Finding your crate's version
     ///
-    /// You can use the included [crate_version] inside of climake to find your
-    /// crate's version
+    /// You may use the following snippet (taken from
+    /// [clap](https://docs.rs/clap/2.33.3/clap/macro.crate_version.html)) to
+    /// fetch your cargo version
+    ///
+    /// ```rust
+    /// pub fn crate_version() -> String {
+    ///     format!(
+    ///         "{}.{}.{}{}",
+    ///         env!("CARGO_PKG_VERSION_MAJOR"),
+    ///         env!("CARGO_PKG_VERSION_MINOR"),
+    ///         env!("CARGO_PKG_VERSION_PATCH"),
+    ///         option_env!("CARGO_PKG_VERSION_PRE").unwrap_or("")
+    ///     )
+    /// }
+    /// ```
     pub version: Option<String>,
 }
 
