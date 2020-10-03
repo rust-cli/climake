@@ -1,6 +1,6 @@
 //! Tests cli header message
 
-use climake::CLIMake;
+use climake::CliMake;
 
 /// Ensures header message displays without errors.
 ///
@@ -8,7 +8,7 @@ use climake::CLIMake;
 /// binary name*
 #[test]
 fn check_header() {
-    let cli = CLIMake::new(&[], Some("A simple CLI."), None).unwrap();
+    let cli = CliMake::new(&[], Some("A simple CLI."), None).unwrap();
 
     cli.header_msg();
 }

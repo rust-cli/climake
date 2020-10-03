@@ -1,6 +1,6 @@
 //! Tests various types of help messages for correct output
 
-use climake::{Argument, CLIMake, DataType};
+use climake::{Argument, CliMake, DataType};
 
 /// Internal helper for tests that removes first `lines` lines from given
 /// [String] `input`
@@ -54,7 +54,7 @@ fn cli_full_help() {
         )
         .unwrap(),
     ];
-    let cli = CLIMake::new(cli_args, Some("A simple debug cli"), None).unwrap();
+    let cli = CliMake::new(cli_args, Some("A simple debug cli"), None).unwrap();
 
     assert_eq!(remove_lines(cli.help_msg(), 2), TRUE_HELP);
 }
@@ -67,7 +67,7 @@ fn specific_arg_help() {
     let arg = Argument::new(&['t'], &[], Some("Specific help"), DataType::None).unwrap();
     let args = &[arg.clone()];
 
-    let cli = CLIMake::new(args, None, None).unwrap();
+    let cli = CliMake::new(args, None, None).unwrap();
 
     assert_eq!(remove_lines(cli.specific_help(&arg), 4), TRUE_HELP);
 }

@@ -43,6 +43,20 @@
 
 use std::{env, fmt, path::PathBuf, process};
 
+/// Finds and correctly formats your crate's version, used primarily for providing
+/// version infomation inside of [CliMake]
+///
+/// *Taken from [clap's `crate_version`](https://docs.rs/clap/2.33.3/clap/macro.crate_version.html)*
+pub fn crate_version() -> String {
+    format!(
+        "{}.{}.{}{}",
+        env!("CARGO_PKG_VERSION_MAJOR"),
+        env!("CARGO_PKG_VERSION_MINOR"),
+        env!("CARGO_PKG_VERSION_PATCH"),
+        option_env!("CARGO_PKG_VERSION_PRE").unwrap_or("")
+    )
+}
+
 /// The primary error enum for climake, used when an error is encountered to use
 /// downstream
 #[derive(Debug, PartialEq, Clone)]
@@ -260,7 +274,7 @@ impl<'a> UsedArg<'a> {
 /// }
 /// ```
 #[derive(Debug, PartialEq, Clone)]
-pub struct CLIMake<'cli, 'a> {
+pub struct CliMake<'cli, 'a> {
     /// Arguments to use for CLI instance
     pub args: &'cli [Argument<'a>],
 
@@ -271,27 +285,13 @@ pub struct CLIMake<'cli, 'a> {
     ///
     /// ## Finding your crate's version
     ///
-    /// You can use the following snippet to find out your crates version:
-    ///
-    /// ```rust
-    /// #[macro_export]
-    /// macro_rules! crate_version {
-    ///     () => {
-    ///         format!("{}.{}.{}{}",
-    ///         env!("CARGO_PKG_VERSION_MAJOR"),
-    ///         env!("CARGO_PKG_VERSION_MINOR"),
-    ///         env!("CARGO_PKG_VERSION_PATCH"),
-    ///         option_env!("CARGO_PKG_VERSION_PRE").unwrap_or(""))
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// *Taken from [clap's `crate_version`](https://docs.rs/clap/2.33.3/clap/macro.crate_version.html)*
+    /// You can use the included [crate_version] inside of climake to find your
+    /// crate's version
     pub version: Option<String>,
 }
 
-impl<'cli, 'a> CLIMake<'cli, 'a> {
-    /// Shortcut to making a [CLIMake] structure, the main entrypoint into
+impl<'cli, 'a> CliMake<'cli, 'a> {
+    /// Shortcut to making a [CliMake] structure, the main entrypoint into
     /// building a CLI with climake
     pub fn new(
         args: &'cli [Argument<'a>],
