@@ -4,6 +4,6 @@ description = "The simple, dependency-less cli library ✨"
 repository = "https://github.com/rust-cli/climake"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-version = "2.1.0"
+version = "2.2.0"
 authors = ["Owez <root@ogriffiths.com>"]
 edition = "2018"
