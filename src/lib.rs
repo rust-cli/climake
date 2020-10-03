@@ -33,7 +33,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! climake = "2.1"
+//! climake = "2.2"
 //! ```
 
 #![doc(

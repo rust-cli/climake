@@ -38,7 +38,7 @@ Simply add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-climake = "2.1"
+climake = "2.2"
 ```
 
 ## License
