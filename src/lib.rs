@@ -3,7 +3,7 @@
 //! ## Example 📚
 //!
 //! ```should_panic
-//! use climake::{Argument, CLIMake, DataType};
+//! use climake::{Argument, CliMake, DataType};
 //!
 //! fn main() {
 //!     let args = &[
@@ -21,7 +21,7 @@
 //!         ).unwrap(),
 //!     ];
 //!
-//!     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
+//!     let cli = CliMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
 //!
 //!     println!("Args used: {:#?}", cli.parse());
 //! }
@@ -250,7 +250,7 @@ impl<'a> UsedArg<'a> {
 /// ## Examples
 ///
 /// ```should_panic
-/// use climake::{Argument, CLIMake, DataType};
+/// use climake::{Argument, CliMake, DataType};
 ///
 /// fn main() {
 ///     let args = &[
@@ -268,7 +268,7 @@ impl<'a> UsedArg<'a> {
 ///         ).unwrap(),
 ///     ];
 ///
-///     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
+///     let cli = CliMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
 ///
 ///     println!("Args used: {:#?}", cli.parse());
 /// }
