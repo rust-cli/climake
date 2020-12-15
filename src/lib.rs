@@ -3,17 +3,6 @@ use std::{env, fmt};
 /// Default help message for [Argument]s without help added
 const HELP_DEFAULT: &str = "No help provided";
 
-/// Gets well-formatted crate version for use in cli
-fn crate_version() -> String {
-    format!(
-        "v{}.{}.{}{}",
-        env!("CARGO_PKG_VERSION_MAJOR"),
-        env!("CARGO_PKG_VERSION_MINOR"),
-        env!("CARGO_PKG_VERSION_PATCH"),
-        option_env!("CARGO_PKG_VERSION_PRE").unwrap_or("")
-    )
-}
-
 /// A single type of call for an [Argument], can be a short call or a long call
 #[derive(Debug, PartialEq)]
 enum CallType {
