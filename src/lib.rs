@@ -86,12 +86,12 @@ impl CliMake {
         }
     }
 
-    /// Adds a single argument
+    /// Adds a single argument to this root [CliMake]
     pub fn add_arg(&mut self, argument: impl Into<Argument>) {
         self.arguments.push(argument.into())
     }
 
-    /// Adds multiple arguments
+    /// Adds multiple arguments to this root [CliMake]
     pub fn add_args(&mut self, arguments: impl IntoIterator<Item = Argument>) {
         for arg in arguments.into_iter() {
             self.add_arg(arg)
