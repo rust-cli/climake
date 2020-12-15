@@ -1,144 +1,141 @@
-//! The simple, dependency-less cli library ✨
+use std::{env, fmt};
 
-#![doc(
-    html_logo_url = "https://github.com/rust-cli/climake/raw/master/logo.png",
-    html_favicon_url = "https://github.com/rust-cli/climake/raw/master/logo.png"
-)]
+/// Default help message for [Argument]s without help added
+const HELP_DEFAULT: &str = "No help provided";
 
-use std::path::PathBuf;
-
-/// The type of data that the end-user is allowed to enter into the CLI prompt.
-/// The [AllowedData::Plaintext] option is the most common choice for this task
-pub enum AllowedData {
-    /// No allowed data. This can be useful for arg boolean flags or a custom
-    /// "allow `-y` to be optionally entered when `-x` is entered"
-    None,
-    /// Plaintext string of normal characters
-    Plaintext(String),
-    /// Single file
-    File(PathBuf),
-    /// Multiple files, like [AllowedData:File] but less strict
-    Files(Vec<PathBuf>),
+/// Gets well-formatted crate version for use in cli
+fn crate_version() -> String {
+    format!(
+        "v{}.{}.{}{}",
+        env!("CARGO_PKG_VERSION_MAJOR"),
+        env!("CARGO_PKG_VERSION_MINOR"),
+        env!("CARGO_PKG_VERSION_PATCH"),
+        option_env!("CARGO_PKG_VERSION_PRE").unwrap_or("")
+    )
 }
 
-// TODO: docstring
-pub struct Argument<'arg> {
-    pub short_calls: &'arg [char],
-    pub long_calls: &'arg [&'arg str],
-    pub help: Option<&'arg str>,
-    pub allowed_data: AllowedData,
+/// A single type of call for an [Argument], can be a short call or a long call
+#[derive(Debug, PartialEq)]
+enum CallType {
+    /// Short, single-char call, e.g. `-h`
+    Short(char),
+
+    /// Long, multi-char call, e.g. `--hello`
+    Long(String),
 }
 
-impl<'arg> Argument<'arg> {
-    /// Shortcut to creating a new [Argument]
+impl fmt::Display for CallType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CallType::Short(c) => write!(f, "{}", c),
+            CallType::Long(string) => write!(f, "--{}", string),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Argument {
+    /// Many [CallType]s corrosponding to this argument
+    calls: Vec<CallType>,
+
+    /// Optional help message
+    help: Option<String>,
+}
+
+impl Argument {
+    /// Creates a new [Argument] from given passed values
     pub fn new(
-        short_calls: &'arg [char],
-        long_calls: &'arg [&'arg str],
-        help: Option<&'arg str>,
-        allowed_data: AllowedData,
+        short_calls: impl IntoIterator<Item = impl Into<char>>,
+        long_calls: impl IntoIterator<Item = impl AsRef<str>>,
+        help: impl Into<Option<String>>,
     ) -> Self {
+        let mut calls: Vec<CallType> = short_calls
+            .into_iter()
+            .map(|call| CallType::Short(call.into()))
+            .collect();
+        calls.append(
+            &mut long_calls
+                .into_iter()
+                .map(|call| CallType::Long(call.as_ref().to_string()))
+                .collect::<Vec<CallType>>(),
+        );
+
         Self {
-            short_calls,
-            long_calls,
-            help,
-            allowed_data,
+            calls,
+            help: help.into(),
         }
     }
 
-    /// Makes properly-formatted call combinations like `(-xyz, --foo, --bar)`
-    fn help_combinations(&self) -> String {
-        let fmt_long_calls = self
-            .long_calls
-            .iter()
-            .map(|c| format!("--{}", c))
-            .collect::<Vec<String>>()
-            .join(", ");
-
-        if self.short_calls.len() == 0 {
-            format!("({})", fmt_long_calls)
-        } else {
-            // TODO: find a nicer way to do this
-            let output_buf = vec![
-                format!("-{}", self.short_calls.iter().collect::<String>()),
-                fmt_long_calls,
-            ];
-            format!("({})", output_buf.join(", "))
+    /// Renders help string (i.e. passed `help` message), see [fmt::Display] impl
+    /// for full help rendering
+    pub fn help_sting(&self) -> &str {
+        match &self.help {
+            Some(help) => help,
+            None => HELP_DEFAULT,
         }
     }
-
-    /// Makes broad, chainable (for many arguments) help for this argument,
-    /// designed to be used for an overall program help message, instead of the
-    /// more focused [Argument::specific_help]
-    fn broad_help(&self) -> String {
-        let arg_combinations = self.help_combinations();
-
-        unimplemented!();
-    }
-
-    /// Makes specific help for this argument. This is different to
-    /// [Argument::broad_help] as this method has an unrestricted character limit.
-    fn specific_help(&self) -> String {
-        let arg_combinations = self.help_combinations();
-
-        unimplemented!();
-    }
 }
 
-// TODO: docstring
-struct SubCommand<'cmd, 'arg> {
-    pub name: &'cmd str,
-    pub help: Option<&'cmd str>,
-    pub allowed_args: Vec<Argument<'arg>>,
-    pub subcommands: Vec<SubCommand<'cmd, 'arg>>,
+#[derive(Debug, PartialEq)]
+pub struct CliMake {
+    arguments: Vec<Argument>,
+    description: Option<String>,
+    version: Option<String>,
 }
 
-// TODO: docstring
-struct CliMake<'cli, 'cmd, 'arg> {
-    /// Description of the program for cli help
-    pub description: Option<&'cli str>,
-    /// The entered [SubCommand]s
-    pub sub_cmds: Vec<SubCommand<'cmd, 'arg>>,
-    /// The entered [Argument]s
-    pub args: Vec<Argument<'arg>>,
-    /// Version of program the cli is running on. Default is the crate version but
-    /// this can be changed with [CliMake::custom_version]
-    version: &'cli str,
-}
-
-impl<'cli, 'cmd, 'arg> CliMake<'cli, 'cmd, 'arg> {
-    /// Creates a new [CliMake] struct from arguments ([Argument]) and
-    /// sub-commands ([SubCommand])
-    ///
-    /// If you'd like to create this struct using just args you may do so with
-    /// [CliMake::from_args] or from just sub-commands with [CliMake::from_sub_cmds]
+impl CliMake {
+    /// Creates a new [Argument] from given passed values
     pub fn new(
-        description: Option<&'cli str>,
-        args: Vec<Argument<'arg>>,
-        sub_cmds: Vec<SubCommand<'cmd, 'arg>>,
+        arguments: impl Into<Vec<Argument>>,
+        description: impl Into<Option<String>>,
+        version: impl Into<Option<String>>,
     ) -> Self {
-        unimplemented!();
+        CliMake {
+            arguments: arguments.into(),
+            description: description.into(),
+            version: version.into(),
+        }
     }
 
-    /// Creates a [CliMake] struct from just arguments ([Argument])
-    pub fn from_args(description: Option<&'cli str>, args: Vec<Argument<'arg>>) -> Self {
-        unimplemented!();
+    /// Adds a single argument
+    pub fn add_arg(&mut self, argument: impl Into<Argument>) {
+        self.arguments.push(argument.into())
     }
 
-    /// Creates a [CliMake] struct from just sub-commands ([SubCommand])
-    pub fn from_sub_cmds(sub_cmds: Vec<SubCommand<'cmd, 'arg>>) -> Self {
-        unimplemented!();
+    /// Adds multiple arguments
+    pub fn add_args(&mut self, arguments: impl IntoIterator<Item = Argument>) {
+        for arg in arguments.into_iter() {
+            self.add_arg(arg)
+        }
     }
 
-    /// Replaces the default crate version shown with a custom version. It is
-    /// advisable to add a `v` at the start of a custom version for
-    /// standardisation with other cli's
-    pub fn custom_version(&mut self, version: &'cli str) {
-        self.version = version
-    }
+    /// Generates header for displaying infomation about this cli
+    ///
+    /// # Example
+    ///
+    /// ```none
+    /// Usage: ./my-app [OPTIONS]
+    ///
+    ///   v0.1.0 — A simple application
+    /// ```
+    pub fn gen_header(&self) -> String {
+        let cur_exe = env::current_exe();
+        let top_line = format!(
+            "Usage: ./{} [OPTIONS]",
+            cur_exe.unwrap().file_stem().unwrap().to_str().unwrap()
+        );
 
-    /// Parses arguments, the main duty of climake
-    pub fn parse(&mut self) -> ! {
-        unimplemented!();
+        match self.description.clone() {
+            Some(d) => {
+                let desc_line = match &self.version {
+                    Some(v) => format!("v{} — {}", v, d),
+                    None => d,
+                };
+
+                format!("{}\n\n  {}", top_line, desc_line)
+            }
+            None => top_line,
+        }
     }
 }
 
@@ -146,17 +143,19 @@ impl<'cli, 'cmd, 'arg> CliMake<'cli, 'cmd, 'arg> {
 mod tests {
     use super::*;
 
-    /// Tests that [Argument::help_combinations] works correctly
     #[test]
-    fn arg_help_combinations() {
+    fn arg_new() {
         assert_eq!(
-            Argument::new(&['f', 'o', 'o'], &["foo", "bar"], None, AllowedData::None)
-                .help_combinations(),
-            String::from("(-foo, --foo, --bar)")
-        );
-        assert_eq!(
-            Argument::new(&['x'], &["x"], None, AllowedData::None).help_combinations(),
-            String::from("(-x, --x)")
-        );
+            Argument::new(vec!['a', 'b'], vec!["hi", "there"], None),
+            Argument {
+                calls: vec![
+                    CallType::Short('a'),
+                    CallType::Short('b'),
+                    CallType::Long("hi".to_string()),
+                    CallType::Long("there".to_string())
+                ],
+                help: None
+            }
+        )
     }
 }
