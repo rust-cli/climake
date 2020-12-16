@@ -23,29 +23,29 @@ impl fmt::Display for CallType {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Argument {
+pub struct Argument<'a> {
     /// Many [CallType]s corrosponding to this argument
     calls: Vec<CallType>,
 
     /// Optional help message
-    help: Option<String>,
+    help: Option<&'a str>,
 }
 
-impl Argument {
+impl<'a> Argument<'a> {
     /// Creates a new [Argument] from given passed values
     pub fn new(
-        short_calls: impl IntoIterator<Item = impl Into<char>>,
-        long_calls: impl IntoIterator<Item = impl AsRef<str>>,
-        help: impl Into<Option<String>>,
+        short_calls: impl IntoIterator<Item = char>,
+        long_calls: impl IntoIterator<Item = &'a str>,
+        help: impl Into<Option<&'a str>>,
     ) -> Self {
         let mut calls: Vec<CallType> = short_calls
             .into_iter()
-            .map(|call| CallType::Short(call.into()))
+            .map(|call| CallType::Short(call))
             .collect();
         calls.append(
             &mut long_calls
                 .into_iter()
-                .map(|call| CallType::Long(call.as_ref().to_string()))
+                .map(|call| CallType::Long(call.to_string()))
                 .collect::<Vec<CallType>>(),
         );
 
@@ -57,7 +57,7 @@ impl Argument {
 
     /// Renders help string (i.e. passed `help` message), see [fmt::Display] impl
     /// for full help rendering
-    pub fn help_sting(&self) -> &str {
+    pub fn help_str(&self) -> &str {
         match &self.help {
             Some(help) => help,
             None => HELP_DEFAULT,
@@ -66,18 +66,18 @@ impl Argument {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct CliMake {
-    arguments: Vec<Argument>,
-    description: Option<String>,
-    version: Option<String>,
+pub struct CliMake<'a> {
+    arguments: Vec<Argument<'a>>,
+    description: Option<&'a str>,
+    version: Option<&'a str>,
 }
 
-impl CliMake {
+impl<'a> CliMake<'a> {
     /// Creates a new [Argument] from given passed values
     pub fn new(
-        arguments: impl Into<Vec<Argument>>,
-        description: impl Into<Option<String>>,
-        version: impl Into<Option<String>>,
+        arguments: impl Into<Vec<Argument<'a>>>,
+        description: impl Into<Option<&'a str>>,
+        version: impl Into<Option<&'a str>>,
     ) -> Self {
         CliMake {
             arguments: arguments.into(),
@@ -87,12 +87,12 @@ impl CliMake {
     }
 
     /// Adds a single argument to this root [CliMake]
-    pub fn add_arg(&mut self, argument: impl Into<Argument>) {
+    pub fn add_arg(&mut self, argument: impl Into<Argument<'a>>) {
         self.arguments.push(argument.into())
     }
 
     /// Adds multiple arguments to this root [CliMake]
-    pub fn add_args(&mut self, arguments: impl IntoIterator<Item = Argument>) {
+    pub fn add_args(&mut self, arguments: impl IntoIterator<Item = Argument<'a>>) {
         for arg in arguments.into_iter() {
             self.add_arg(arg)
         }
@@ -107,7 +107,7 @@ impl CliMake {
     ///
     ///   v0.1.0 — A simple application
     /// ```
-    pub fn gen_header(&self) -> String {
+    pub fn header_string(&self) -> String {
         let cur_exe = env::current_exe();
         let top_line = format!(
             "Usage: ./{} [OPTIONS]",
@@ -118,7 +118,7 @@ impl CliMake {
             Some(d) => {
                 let desc_line = match &self.version {
                     Some(v) => format!("v{} — {}", v, d),
-                    None => d,
+                    None => d.to_string(),
                 };
 
                 format!("{}\n\n  {}", top_line, desc_line)
@@ -145,6 +145,18 @@ mod tests {
                 ],
                 help: None
             }
+        )
+    }
+
+    #[test]
+    fn arg_help() {
+        assert_eq!(
+            Argument::new(vec![], vec![], None).help_str(),
+            HELP_DEFAULT
+        );
+        assert_eq!(
+            Argument::new(vec![], vec![], "Example help").help_str(),
+            "Example help".to_string()
         )
     }
 }
