@@ -4,8 +4,10 @@
 use climake::CliMake;
 use std::io;
 
+const DIVIDER: &str = "--------------------------------------------------------------------------------";
+
 fn main() -> io::Result<()> {
-    println!("Simple:");
+    println!("Simple:\n{}", DIVIDER);
     CliMake::new(
         vec![],
         "Example program",
@@ -13,13 +15,14 @@ fn main() -> io::Result<()> {
         "1.0.0"
     ).header_msg(&mut io::stdout())?;
 
-    println!("Long:");
+    println!("{0}\n\nLong:\n{0}", DIVIDER);
     CliMake::new(
         vec![], 
         "Example program", 
         "A very long description, designed to potentially span multiple lines to test the prowess of formatting climake uses",
         "1.0.0"
     ).header_msg(&mut io::stdout())?;
+    println!("{}", DIVIDER);
 
     Ok(())
 }

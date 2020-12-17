@@ -256,7 +256,19 @@ impl<'a> CliMake<'a> {
     /// - [CliMake::header_msg]: Header generation for help message and errors
     /// - [Argument::help_msg]: Help generation for single [Argument]s
     pub fn help_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
-        unimplemented!()
+        self.header_msg(buf)?;
+
+        if self.arguments.len() != 0 {
+            buf.write("\nOptions:\n".as_bytes())?;
+
+            for argument in self.arguments.iter() {
+                argument.help_msg(buf)?;
+            }
+        }
+
+        // TODO: subcommends
+
+        Ok(())
     }
 }
 
