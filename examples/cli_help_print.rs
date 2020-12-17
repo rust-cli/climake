@@ -27,8 +27,8 @@ fn main() -> std::io::Result<()> {
     ];
 
     let cli = CliMake::new(
-        arguments,
         "Help info",
+        arguments,
         "A simple utility cli to print help info",
         "1.0.0",
     );

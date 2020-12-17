@@ -9,16 +9,16 @@ const DIVIDER: &str = "---------------------------------------------------------
 fn main() -> io::Result<()> {
     println!("Simple:\n{}", DIVIDER);
     CliMake::new(
-        vec![],
         "Example program",
+        vec![],
         "A simple description",
         "1.0.0"
     ).header_msg(&mut io::stdout())?;
 
     println!("{0}\n\nLong:\n{0}", DIVIDER);
     CliMake::new(
-        vec![], 
         "Example program", 
+        vec![], 
         "A very long description, designed to potentially span multiple lines to test the prowess of formatting climake uses",
         "1.0.0"
     ).header_msg(&mut io::stdout())?;

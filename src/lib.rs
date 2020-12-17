@@ -169,11 +169,11 @@ impl<'a> Argument<'a> {
 /// Main cli structure, infomaton coming soon..
 #[derive(Debug, PartialEq)]
 pub struct CliMake<'a> {
-    /// Internal arguments stored inside the cli once created/added to
-    arguments: Vec<Argument<'a>>,
-
     /// Name of the program using the cli
     name: &'a str,
+
+    /// Internal arguments stored inside the cli once created/added to
+    arguments: Vec<Argument<'a>>,
 
     /// Optional short description of the program using the cli
     description: Option<&'a str>,
@@ -205,8 +205,8 @@ pub struct CliMake<'a> {
 impl<'a> CliMake<'a> {
     /// Creates a new [Argument] from given passed values
     pub fn new(
-        arguments: impl Into<Vec<Argument<'a>>>,
         name: impl Into<&'a str>,
+        arguments: impl Into<Vec<Argument<'a>>>,
         description: impl Into<Option<&'a str>>,
         version: impl Into<Option<&'a str>>,
     ) -> Self {
@@ -252,7 +252,7 @@ impl<'a> CliMake<'a> {
     ///
     /// fn main() {
     ///     let cli = CliMake::new(
-    ///         vec![], "My app", "A simple application", "0.1.0"
+    ///         "My app", vec![], "A simple application", "0.1.0"
     ///     );
     ///
     ///     cli.header_msg(&mut io::stdout()).unwrap();
@@ -315,7 +315,7 @@ impl<'a> CliMake<'a> {
     ///     ];
     ///
     ///     let cli = CliMake::new(
-    ///         args, "My app", "A simple application", "0.1.0"
+    ///         "My app", args, "A simple application", "0.1.0"
     ///     );
     ///
     ///     cli.help_msg(&mut io::stdout()).unwrap();
