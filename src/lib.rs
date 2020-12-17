@@ -1,7 +1,12 @@
+use std::io::{prelude::*, LineWriter};
 use std::{env, fmt};
 
 /// Default help message for [Argument]s without help added
 const HELP_DEFAULT: &str = "No help provided";
+
+/// Tabs to render for CLI arguments. This will be subtracted from 80 char width
+/// of terminals allowed so spaces are reccomended
+const CLI_TABBING: &str = "  ";
 
 /// A single type of call for an [Argument], can be a short call or a long call
 #[derive(Debug, PartialEq)]
@@ -54,35 +59,57 @@ impl<'a> Argument<'a> {
             help: help.into(),
         }
     }
-
-    /// Renders help string (i.e. passed `help` message), see [fmt::Display] impl
-    /// for full help rendering
-    pub fn gen_help_line(&self) -> &str {
-        match &self.help {
-            Some(help) => help,
-            None => HELP_DEFAULT,
-        }
-    }
 }
 
 #[derive(Debug, PartialEq)]
 pub struct CliMake<'a> {
+    /// Internal arguments stored inside the cli once created/added to
     arguments: Vec<Argument<'a>>,
+
+    /// Name of the program using the cli
+    name: &'a str,
+
+    /// Optional short description of the program using the cli
     description: Option<&'a str>,
+
+    /// Optional version string of the program using the cli
+    ///
+    /// # Crate version
+    ///
+    /// If you would like this value to automatically update with your crates version,
+    /// you may use a variation of the following function:
+    ///
+    /// ```rust
+    /// pub fn crate_version() -> String {
+    ///     format!(
+    ///         "{}.{}.{}{}",
+    ///         env!("CARGO_PKG_VERSION_MAJOR"),
+    ///         env!("CARGO_PKG_VERSION_MINOR"),
+    ///         env!("CARGO_PKG_VERSION_PATCH"),
+    ///         option_env!("CARGO_PKG_VERSION_PRE").unwrap_or("")
+    ///     )
+    /// }
+    /// ```
     version: Option<&'a str>,
+
+    /// Internal/private tabbing to use, defaults to [CLI_TABBING]
+    tabbing: &'static str,
 }
 
 impl<'a> CliMake<'a> {
     /// Creates a new [Argument] from given passed values
     pub fn new(
         arguments: impl Into<Vec<Argument<'a>>>,
+        name: impl Into<&'a str>,
         description: impl Into<Option<&'a str>>,
         version: impl Into<Option<&'a str>>,
     ) -> Self {
         CliMake {
             arguments: arguments.into(),
+            name: name.into(),
             description: description.into(),
             version: version.into(),
+            tabbing: CLI_TABBING,
         }
     }
 
@@ -98,8 +125,13 @@ impl<'a> CliMake<'a> {
         }
     }
 
-    /// Generates header for displaying infomation about this cli, see [fmt::Display]
-    /// impl for full help rendering
+    /// Sets tabbing distance for current [CliMake], default is `2` spaces for tabs
+    pub fn tabbing(&mut self, tab_size: impl Into<&'static str>) {
+        self.tabbing = tab_size.into();
+    }
+
+    /// Generates header and streams to given [Write] buffer for displaying info
+    /// about this cli, see [fmt::Display] impl for full help rendering
     ///
     /// # Example
     ///
@@ -108,23 +140,34 @@ impl<'a> CliMake<'a> {
     ///
     ///   v0.1.0 — A simple application
     /// ```
-    pub fn gen_header_line(&self) -> String {
+    pub fn gen_header_line(&self, mut buf: impl Write) -> std::io::Result<()> {
         let cur_exe = env::current_exe();
-        let top_line = format!(
-            "Usage: ./{} [OPTIONS]",
+
+        buf.write_fmt(format_args!(
+            "Usage: ./{} [OPTIONS]\n",
             cur_exe.unwrap().file_stem().unwrap().to_str().unwrap()
-        );
+        ))?;
 
         match self.description.clone() {
             Some(d) => {
-                let desc_line = match &self.version {
-                    Some(v) => format!("v{} — {}", v, d),
-                    None => d.to_string(),
+                let newline_byte = "\n".as_bytes();
+
+                buf.write(newline_byte)?; // write formatting empty byte
+
+                let desc_section = match &self.version {
+                    Some(v) => format!("{} v{} — {}", self.name, v, d),
+                    None => format!("{} — {}", self.name, d),
                 };
 
-                format!("{}\n\n  {}", top_line, desc_line)
+                let mut line_buf = LineWriter::new(buf);
+
+                for line in desc_section.as_bytes().chunks(80 - CLI_TABBING.len()) {
+                    line_buf.write(&[CLI_TABBING.as_bytes(), line, newline_byte].concat())?;
+                }
+
+                Ok(())
             }
-            None => top_line,
+            None => Ok(()),
         }
     }
 }
@@ -146,18 +189,6 @@ mod tests {
                 ],
                 help: None
             }
-        )
-    }
-
-    #[test]
-    fn arg_help() {
-        assert_eq!(
-            Argument::new(vec![], vec![], None).gen_help_line(),
-            HELP_DEFAULT
-        );
-        assert_eq!(
-            Argument::new(vec![], vec![], "Example help").gen_help_line(),
-            "Example help".to_string()
         )
     }
 }
