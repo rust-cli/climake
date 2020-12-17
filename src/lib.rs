@@ -4,7 +4,7 @@ use std::{env, fmt};
 /// Default help message for [Argument]s without help added
 const HELP_DEFAULT: &str = "No help provided";
 
-/// Tabs to render for CLI arguments. This will be subtracted from 80 char width
+/// Tabs to render for cli arguments. This will be subtracted from 80 char width
 /// of terminals allowed so spaces are reccomended
 const CLI_TABBING: &str = "  ";
 
@@ -27,21 +27,57 @@ impl fmt::Display for CallType {
     }
 }
 
+/// An input type, typically given for an [Argument] to descibe what types are
+/// allowed to be passwed in. This is then transferred to [Data] once the cli
+/// has been executed
+#[derive(Debug, PartialEq)]
+pub enum Input {
+    /// No input allowed, will error if any is given
+    None,
+
+    /// Text input allowed, this will return an empty string if no text is supplied
+    Text,
+
+    /// A single [PathBuf] given to the argument, these are not certain to exist
+    /// and simply echo the user's input
+    Path,
+
+    /// Multiple [PathBuf]s given to the argument, these are not certain to exist
+    /// and simply echo the user's input
+    Paths,
+}
+
+impl fmt::Display for Input {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Input::None => write!(f, ""),
+            Input::Text => write!(f, "TEXT"),
+            Input::Path => write!(f, "PATH"),
+            Input::Paths => write!(f, "PATHS"),
+        }
+    }
+}
+
+/// An argument, infomaton coming soon..
 #[derive(Debug, PartialEq)]
 pub struct Argument<'a> {
+    /// Optional help message
+    help: Option<&'a str>,
+
     /// Many [CallType]s corrosponding to this argument
     calls: Vec<CallType>,
 
-    /// Optional help message
-    help: Option<&'a str>,
+    /// [Input] type allowed for this argument
+    input: Input,
 }
 
 impl<'a> Argument<'a> {
     /// Creates a new [Argument] from given passed values
     pub fn new(
+        help: impl Into<Option<&'a str>>,
         short_calls: impl IntoIterator<Item = char>,
         long_calls: impl IntoIterator<Item = &'a str>,
-        help: impl Into<Option<&'a str>>,
+        input: impl Into<Input>,
     ) -> Self {
         let mut calls: Vec<CallType> = short_calls
             .into_iter()
@@ -55,12 +91,14 @@ impl<'a> Argument<'a> {
         );
 
         Self {
-            calls,
             help: help.into(),
+            calls,
+            input: input.into(),
         }
     }
 }
 
+/// Main cli structure, infomaton coming soon..
 #[derive(Debug, PartialEq)]
 pub struct CliMake<'a> {
     /// Internal arguments stored inside the cli once created/added to
@@ -179,7 +217,7 @@ mod tests {
     #[test]
     fn arg_new() {
         assert_eq!(
-            Argument::new(vec!['a', 'b'], vec!["hi", "there"], None),
+            Argument::new(None, vec!['a', 'b'], vec!["hi", "there"], Input::Text),
             Argument {
                 calls: vec![
                     CallType::Short('a'),
@@ -187,7 +225,8 @@ mod tests {
                     CallType::Long("hi".to_string()),
                     CallType::Long("there".to_string())
                 ],
-                help: None
+                help: None,
+                input: Input::Text
             }
         )
     }
