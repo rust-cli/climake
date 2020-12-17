@@ -52,9 +52,9 @@ impl fmt::Display for Input {
         // formatting has a space on existing words on purpouse for help generation
         match self {
             Input::None => write!(f, ""),
-            Input::Text => write!(f, "TEXT "),
-            Input::Path => write!(f, "PATH "),
-            Input::Paths => write!(f, "PATHS "),
+            Input::Text => write!(f, "[text] "),
+            Input::Path => write!(f, "[path] "),
+            Input::Paths => write!(f, "[paths] "),
         }
     }
 }

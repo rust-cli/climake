@@ -1,5 +1,5 @@
 //! Example which simply prints header infomation. Please note that this does not
-//! parse any cli infomation, just simply prints out infomation about this cli
+//! parse any cli infomation, but just simply prints out infomation about this cli
 
 use climake::CliMake;
 use std::io;
