@@ -259,7 +259,7 @@ impl<'a> CliMake<'a> {
         self.header_msg(buf)?;
 
         if self.arguments.len() != 0 {
-            buf.write("\nOptions:\n".as_bytes())?;
+            buf.write("\nArguments:\n".as_bytes())?;
 
             for argument in self.arguments.iter() {
                 argument.help_msg(buf)?;
