@@ -52,9 +52,9 @@ impl fmt::Display for Input {
         // formatting has a space on existing words on purpouse for help generation
         match self {
             Input::None => write!(f, ""),
-            Input::Text => write!(f, " TEXT"),
-            Input::Path => write!(f, " PATH"),
-            Input::Paths => write!(f, " PATHS"),
+            Input::Text => write!(f, "TEXT "),
+            Input::Path => write!(f, "PATH "),
+            Input::Paths => write!(f, "PATHS "),
         }
     }
 }
@@ -127,12 +127,16 @@ impl<'a> Argument<'a> {
         };
 
         writeln_term(
-            format!(
-                "({}){}: {}",
-                formatted_calls.join(", "),
-                self.input,
-                formatted_help,
-            ),
+            if formatted_calls.len() == 1 && formatted_calls[0] != "" {
+                format!("{} {}— {}", formatted_calls[0], self.input, formatted_help)
+            } else {
+                format!(
+                    "({}) {}— {}",
+                    formatted_calls.join(", "),
+                    self.input,
+                    formatted_help,
+                )
+            },
             buf,
         )
     }
@@ -313,7 +317,22 @@ mod tests {
         Argument::new(None, vec![], vec![], Input::None).help_msg(&mut chk_vec)?;
         assert_eq!(
             std::str::from_utf8(chk_vec.as_slice()).unwrap(),
-            "  (): No help provided\n"
+            "  () — No help provided\n"
+        );
+        chk_vec = vec![];
+
+        Argument::new("Some simple help", vec!['a'], vec!["long"], Input::Text)
+            .help_msg(&mut chk_vec)?;
+        assert_eq!(
+            std::str::from_utf8(chk_vec.as_slice()).unwrap(),
+            "  (-a, --long) TEXT — Some simple help\n"
+        );
+        chk_vec = vec![];
+
+        Argument::new(None, vec!['a'], vec![], Input::Text).help_msg(&mut chk_vec)?;
+        assert_eq!(
+            std::str::from_utf8(chk_vec.as_slice()).unwrap(),
+            "  -a TEXT — No help provided\n"
         );
 
         Ok(())
