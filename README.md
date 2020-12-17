@@ -1,5 +1,7 @@
 # climake
 
+> NOTE: This branch represents the outdated but currently stable version of climake. This library is being rewritten on the `v3-rewrite` branch and the syntax will change!
+
 The simple, dependency-less cli library ✨
 
 - [Crates.io](https://crates.io/crates/climake)
