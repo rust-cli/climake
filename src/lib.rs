@@ -325,14 +325,14 @@ mod tests {
             .help_msg(&mut chk_vec)?;
         assert_eq!(
             std::str::from_utf8(chk_vec.as_slice()).unwrap(),
-            "  (-a, --long) TEXT — Some simple help\n"
+            "  (-a, --long) [text] — Some simple help\n"
         );
         chk_vec = vec![];
 
         Argument::new(None, vec!['a'], vec![], Input::Text).help_msg(&mut chk_vec)?;
         assert_eq!(
             std::str::from_utf8(chk_vec.as_slice()).unwrap(),
-            "  -a TEXT — No help provided\n"
+            "  -a [text] — No help provided\n"
         );
 
         Ok(())
