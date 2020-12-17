@@ -49,11 +49,12 @@ pub enum Input {
 
 impl fmt::Display for Input {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // formatting has a space on existing words on purpouse for help generation
         match self {
             Input::None => write!(f, ""),
-            Input::Text => write!(f, "TEXT"),
-            Input::Path => write!(f, "PATH"),
-            Input::Paths => write!(f, "PATHS"),
+            Input::Text => write!(f, " TEXT"),
+            Input::Path => write!(f, " PATH"),
+            Input::Paths => write!(f, " PATHS"),
         }
     }
 }
@@ -95,6 +96,45 @@ impl<'a> Argument<'a> {
             calls,
             input: input.into(),
         }
+    }
+
+    /// Generates help message for current [Argument]. This writes directly to a
+    /// buffer of some kind (typically [std::io::stdout]) for simplicity, perf and
+    /// extendability reasons
+    pub fn help_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
+        let mut lc_buf: Vec<String> = Vec::new();
+        let mut sc_buf: Vec<char> = Vec::new();
+
+        for call in self.calls.iter() {
+            match call {
+                CallType::Long(call) => lc_buf.push(format!("--{}", call)),
+                CallType::Short(call) => sc_buf.push(*call),
+            }
+        }
+
+        let short_calls: String = if sc_buf.len() == 0 {
+            String::new()
+        } else {
+            format!("-{}", sc_buf.iter().collect::<String>())
+        };
+
+        let mut formatted_calls = vec![short_calls];
+        formatted_calls.append(&mut lc_buf);
+
+        let formatted_help = match self.help {
+            Some(msg) => msg,
+            None => HELP_DEFAULT,
+        };
+
+        writeln_term(
+            format!(
+                "({}){}: {}",
+                formatted_calls.join(", "),
+                self.input,
+                formatted_help,
+            ),
+            buf,
+        )
     }
 }
 
@@ -169,7 +209,10 @@ impl<'a> CliMake<'a> {
     }
 
     /// Generates header and streams to given [Write] buffer for displaying info
-    /// about this cli, see [fmt::Display] impl for full help rendering
+    /// about this cli.
+    ///
+    /// Please check [CliMake::help] for the full help message generation used
+    /// throughout automatic execution of this cli
     ///
     /// # Example
     ///
@@ -178,7 +221,7 @@ impl<'a> CliMake<'a> {
     ///
     ///   v0.1.0 — A simple application
     /// ```
-    pub fn gen_header_line(&self, mut buf: impl Write) -> std::io::Result<()> {
+    pub fn header_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
         let cur_exe = env::current_exe();
 
         buf.write_fmt(format_args!(
@@ -188,26 +231,46 @@ impl<'a> CliMake<'a> {
 
         match self.description.clone() {
             Some(d) => {
-                let newline_byte = "\n".as_bytes();
+                buf.write("\n".as_bytes())?; // write formatting empty byte
 
-                buf.write(newline_byte)?; // write formatting empty byte
-
-                let desc_section = match &self.version {
-                    Some(v) => format!("{} v{} — {}", self.name, v, d),
-                    None => format!("{} — {}", self.name, d),
-                };
-
-                let mut line_buf = LineWriter::new(buf);
-
-                for line in desc_section.as_bytes().chunks(80 - CLI_TABBING.len()) {
-                    line_buf.write(&[CLI_TABBING.as_bytes(), line, newline_byte].concat())?;
-                }
-
-                Ok(())
+                writeln_term(
+                    match &self.version {
+                        Some(v) => format!("{} v{} — {}", self.name, v, d),
+                        None => format!("{} — {}", self.name, d),
+                    },
+                    buf,
+                )
             }
             None => Ok(()),
         }
     }
+
+    /// Displays help infomation for climake which is used inside the execution
+    /// of the cli
+    ///
+    /// # Help sources
+    ///
+    /// This method gets sections of messaging such as the header from various
+    /// *public*-available methods inside of this library:
+    ///
+    /// - [CliMake::header_msg]: Header generation for help message and errors
+    /// - [Argument::help_msg]: Help generation for single [Argument]s
+    pub fn help_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
+        unimplemented!()
+    }
+}
+
+/// Writes a given buffer to terminal using [LineWriter] and splits every 80
+//// characters, making it ideal for concise terminal displays for help messages
+fn writeln_term(to_write: impl Into<String>, buf: impl Write) -> std::io::Result<()> {
+    let mut line_buf = LineWriter::new(buf);
+    let newline_byte = "\n".as_bytes();
+
+    for line in to_write.into().as_bytes().chunks(80 - CLI_TABBING.len()) {
+        line_buf.write(&[CLI_TABBING.as_bytes(), line, newline_byte].concat())?;
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -229,5 +292,18 @@ mod tests {
                 input: Input::Text
             }
         )
+    }
+
+    #[test]
+    fn arg_full_help() -> std::io::Result<()> {
+        let mut chk_vec: Vec<u8> = vec![];
+
+        Argument::new(None, vec![], vec![], Input::None).help_msg(&mut chk_vec)?;
+        assert_eq!(
+            std::str::from_utf8(chk_vec.as_slice()).unwrap(),
+            "  (): No help provided\n"
+        );
+
+        Ok(())
     }
 }

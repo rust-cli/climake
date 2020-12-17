@@ -11,7 +11,7 @@ fn main() -> io::Result<()> {
         "Example program",
         "A simple description",
         "1.0.0"
-    ).gen_header_line(io::stdout())?;
+    ).header_msg(&mut io::stdout())?;
 
     println!("Long:");
     CliMake::new(
@@ -19,7 +19,7 @@ fn main() -> io::Result<()> {
         "Example program", 
         "A very long description, designed to potentially span multiple lines to test the prowess of formatting climake uses",
         "1.0.0"
-    ).gen_header_line(io::stdout())?;
+    ).header_msg(&mut io::stdout())?;
 
     Ok(())
 }
