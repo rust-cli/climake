@@ -1,4 +1,4 @@
-use climake::{Argument, CLIMake, DataType};
+use climake::{Argument, CliMake, DataType};
 
 fn main() {
     let args = &[
@@ -16,7 +16,7 @@ fn main() {
         ).unwrap(),
     ];
 
-    let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
+    let cli = CliMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
 
-    println!("Args used:\n{:#?}", cli.parse());
+    println!("Args used: {:#?}", cli.parse());
 }

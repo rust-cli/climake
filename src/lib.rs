@@ -3,7 +3,7 @@
 //! ## Example 📚
 //!
 //! ```should_panic
-//! use climake::{Argument, CLIMake, DataType};
+//! use climake::{Argument, CliMake, DataType};
 //!
 //! fn main() {
 //!     let args = &[
@@ -21,7 +21,7 @@
 //!         ).unwrap(),
 //!     ];
 //!
-//!     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
+//!     let cli = CliMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
 //!
 //!     println!("Args used: {:#?}", cli.parse());
 //! }
@@ -33,7 +33,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! climake = "2.1"
+//! climake = "2.2"
 //! ```
 
 #![doc(
@@ -236,7 +236,7 @@ impl<'a> UsedArg<'a> {
 /// ## Examples
 ///
 /// ```should_panic
-/// use climake::{Argument, CLIMake, DataType};
+/// use climake::{Argument, CliMake, DataType};
 ///
 /// fn main() {
 ///     let args = &[
@@ -254,13 +254,13 @@ impl<'a> UsedArg<'a> {
 ///         ).unwrap(),
 ///     ];
 ///
-///     let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
+///     let cli = CliMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
 ///
 ///     println!("Args used: {:#?}", cli.parse());
 /// }
 /// ```
 #[derive(Debug, PartialEq, Clone)]
-pub struct CLIMake<'cli, 'a> {
+pub struct CliMake<'cli, 'a> {
     /// Arguments to use for CLI instance
     pub args: &'cli [Argument<'a>],
 
@@ -271,27 +271,26 @@ pub struct CLIMake<'cli, 'a> {
     ///
     /// ## Finding your crate's version
     ///
-    /// You can use the following snippet to find out your crates version:
+    /// You may use the following snippet (taken from
+    /// [clap](https://docs.rs/clap/2.33.3/clap/macro.crate_version.html)) to
+    /// fetch your cargo version
     ///
     /// ```rust
-    /// #[macro_export]
-    /// macro_rules! crate_version {
-    ///     () => {
-    ///         format!("{}.{}.{}{}",
+    /// pub fn crate_version() -> String {
+    ///     format!(
+    ///         "{}.{}.{}{}",
     ///         env!("CARGO_PKG_VERSION_MAJOR"),
     ///         env!("CARGO_PKG_VERSION_MINOR"),
     ///         env!("CARGO_PKG_VERSION_PATCH"),
-    ///         option_env!("CARGO_PKG_VERSION_PRE").unwrap_or(""))
-    ///     }
+    ///         option_env!("CARGO_PKG_VERSION_PRE").unwrap_or("")
+    ///     )
     /// }
     /// ```
-    ///
-    /// *Taken from [clap's `crate_version`](https://docs.rs/clap/2.33.3/clap/macro.crate_version.html)*
     pub version: Option<String>,
 }
 
-impl<'cli, 'a> CLIMake<'cli, 'a> {
-    /// Shortcut to making a [CLIMake] structure, the main entrypoint into
+impl<'cli, 'a> CliMake<'cli, 'a> {
+    /// Shortcut to making a [CliMake] structure, the main entrypoint into
     /// building a CLI with climake
     pub fn new(
         args: &'cli [Argument<'a>],

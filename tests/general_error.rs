@@ -1,6 +1,6 @@
 //! Tests that errors are properly reported when invalid data is provided
 
-use climake::{Argument, CLIMake, DataType};
+use climake::{Argument, CliMake, DataType};
 
 /// Makes sure that passing no calltypes to an argument, e.g. `&[], &[]`
 /// will return a [CLIError::NoCalls]
@@ -29,5 +29,5 @@ fn ensure_dupe_error() {
     )
     .unwrap();
 
-    CLIMake::new(&[org_arg.clone(), org_arg], None, None).unwrap(); // will fail with cloned org_arg
+    CliMake::new(&[org_arg.clone(), org_arg], None, None).unwrap(); // will fail with cloned org_arg
 }

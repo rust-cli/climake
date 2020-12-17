@@ -10,7 +10,7 @@ The simple, dependency-less cli library ✨
 ## Example 📚
 
 ```rust
-use climake::{Argument, CLIMake, DataType};
+use climake::{Argument, CliMake, DataType};
 
 fn main() {
     let args = &[
@@ -28,7 +28,7 @@ fn main() {
         ).unwrap(),
     ];
 
-    let cli = CLIMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
+    let cli = CliMake::new(args, Some("A showcase CLI to demonstrate climake"), None).unwrap();
 
     println!("Args used: {:#?}", cli.parse());
 }
@@ -40,7 +40,7 @@ Simply add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-climake = "2.1"
+climake = "2.2"
 ```
 
 ## License
