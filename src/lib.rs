@@ -57,7 +57,7 @@ impl<'a> Argument<'a> {
 
     /// Renders help string (i.e. passed `help` message), see [fmt::Display] impl
     /// for full help rendering
-    pub fn help_str(&self) -> &str {
+    pub fn gen_help_line(&self) -> &str {
         match &self.help {
             Some(help) => help,
             None => HELP_DEFAULT,
@@ -98,7 +98,8 @@ impl<'a> CliMake<'a> {
         }
     }
 
-    /// Generates header for displaying infomation about this cli
+    /// Generates header for displaying infomation about this cli, see [fmt::Display]
+    /// impl for full help rendering
     ///
     /// # Example
     ///
@@ -107,7 +108,7 @@ impl<'a> CliMake<'a> {
     ///
     ///   v0.1.0 — A simple application
     /// ```
-    pub fn header_string(&self) -> String {
+    pub fn gen_header_line(&self) -> String {
         let cur_exe = env::current_exe();
         let top_line = format!(
             "Usage: ./{} [OPTIONS]",
@@ -151,11 +152,11 @@ mod tests {
     #[test]
     fn arg_help() {
         assert_eq!(
-            Argument::new(vec![], vec![], None).help_str(),
+            Argument::new(vec![], vec![], None).gen_help_line(),
             HELP_DEFAULT
         );
         assert_eq!(
-            Argument::new(vec![], vec![], "Example help").help_str(),
+            Argument::new(vec![], vec![], "Example help").gen_help_line(),
             "Example help".to_string()
         )
     }
