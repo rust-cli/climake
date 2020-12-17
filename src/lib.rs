@@ -98,9 +98,33 @@ impl<'a> Argument<'a> {
         }
     }
 
-    /// Generates help message for current [Argument]. This writes directly to a
-    /// buffer of some kind (typically [std::io::stdout]) for simplicity, perf and
-    /// extendability reasons
+    /// Generates help message for current [Argument]
+    ///
+    /// This writes directly to a buffer of some kind (typically [std::io::stdout])
+    /// for simplicity, perf and extendability reasons.
+    ///
+    /// # Example
+    ///
+    /// Usage:
+    ///
+    /// ```rust
+    /// use std::io;
+    /// use climake::{Argument, Input};
+    ///
+    /// fn main() {
+    ///     let arg = Argument::new(
+    ///         "Verbose mode", vec!['v'], vec!["verbose"], Input::None
+    ///     );
+    ///
+    ///     arg.help_msg(&mut io::stdout()).unwrap();
+    /// }
+    /// ```
+    ///
+    /// What this may look like:
+    ///
+    /// ```none
+    ///   (-v, --verbose) — Verbose mode
+    /// ```
     pub fn help_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
         let mut lc_buf: Vec<String> = Vec::new();
         let mut sc_buf: Vec<char> = Vec::new();
@@ -220,10 +244,27 @@ impl<'a> CliMake<'a> {
     ///
     /// # Example
     ///
+    /// Usage:
+    ///
+    /// ```rust
+    /// use std::io;
+    /// use climake::CliMake;
+    ///
+    /// fn main() {
+    ///     let cli = CliMake::new(
+    ///         vec![], "My app", "A simple application", "0.1.0"
+    ///     );
+    ///
+    ///     cli.header_msg(&mut io::stdout()).unwrap();
+    /// }
+    /// ```
+    ///
+    /// What this may display:
+    ///
     /// ```none
     /// Usage: ./my-app [OPTIONS]
     ///
-    ///   v0.1.0 — A simple application
+    ///   My app v0.1.0 — A simple application
     /// ```
     pub fn header_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
         let cur_exe = env::current_exe();
@@ -259,6 +300,38 @@ impl<'a> CliMake<'a> {
     ///
     /// - [CliMake::header_msg]: Header generation for help message and errors
     /// - [Argument::help_msg]: Help generation for single [Argument]s
+    ///
+    /// # Example
+    ///
+    /// Usage:
+    ///
+    /// ```rust
+    /// use std::io;
+    /// use climake::{CliMake, Argument, Input};
+    ///
+    /// fn main() {
+    ///     let args = vec![
+    ///         Argument::new("Verbose mode", vec!['v'], vec!["verbose"], Input::None)
+    ///     ];
+    ///
+    ///     let cli = CliMake::new(
+    ///         args, "My app", "A simple application", "0.1.0"
+    ///     );
+    ///
+    ///     cli.help_msg(&mut io::stdout()).unwrap();
+    /// }
+    /// ```
+    ///
+    /// What this may look like:
+    ///
+    /// ```none
+    /// Usage: ./my-app [OPTIONS]
+    ///
+    ///   My app v0.1.0 — A simple application
+    ///
+    /// Arguments:
+    ///   (-v, --verbose) — Verbose mode
+    /// ```
     pub fn help_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
         self.header_msg(buf)?;
 
