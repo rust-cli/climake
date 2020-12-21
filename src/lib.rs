@@ -166,14 +166,50 @@ impl<'a> Argument<'a> {
     }
 }
 
+/// Subcommand attached to a cli, allowing non-argument commands to be executed
+/// with arguments attached to oneself for more complex operations
+#[derive(Debug, PartialEq)]
+pub struct Subcommand<'a> {
+    /// Name of subcommand, used both in help and as the single calling method
+    pub name: &'a str,
+
+    /// Argument(s) attached to this [Subcommand], if any
+    pub arguments: Vec<Argument<'a>>
+}
+
+impl<'a> Subcommand<'a> {
+    /// Creates a new subcommand from given abstracted inputs
+    pub fn new(name: impl Into<&'a str>, arguments: impl Into<Vec<Argument<'a>>>) -> Self {
+        Self {
+            name: name.into(),
+            arguments: arguments.into()
+        }
+    }
+
+    /// Displays help infomation for this subcommand specifically which is used
+    /// inside the execution of the cli
+    ///
+    /// A referenced [CliMake] is needed for this method due to it displaying a
+    /// header message using [CliMake::head_msg] with an altered usage line, as
+    /// seen in the examples.
+    pub fn help_msg(&self, climake: &CliMake, buf: &mut impl Write) -> std::io::Result<()> {
+        climake.header_msg(self.name, buf)?;
+
+        unimplemented!()
+    }
+}
+
 /// Main cli structure, infomaton coming soon..
 #[derive(Debug, PartialEq)]
 pub struct CliMake<'a> {
     /// Name of the program using the cli
     name: &'a str,
 
-    /// Internal arguments stored inside the cli once created/added to
+    /// Internal [Argument]s stored inside the cli once created/added to
     arguments: Vec<Argument<'a>>,
+
+    /// Internal [Subcommand]s stored inside the cli once created/added to
+    subcommands: Vec<Subcommand<'a>>,
 
     /// Optional short description of the program using the cli
     description: Option<&'a str>,
@@ -207,12 +243,14 @@ impl<'a> CliMake<'a> {
     pub fn new(
         name: impl Into<&'a str>,
         arguments: impl Into<Vec<Argument<'a>>>,
+        subcommands: impl Into<Vec<Subcommand<'a>>>,
         description: impl Into<Option<&'a str>>,
         version: impl Into<Option<&'a str>>,
     ) -> Self {
         CliMake {
-            arguments: arguments.into(),
             name: name.into(),
+            arguments: arguments.into(),
+            subcommands: subcommands.into(),
             description: description.into(),
             version: version.into(),
             tabbing: CLI_TABBING,
@@ -240,7 +278,10 @@ impl<'a> CliMake<'a> {
     /// about this cli.
     ///
     /// Please check [CliMake::help] for the full help message generation used
-    /// throughout automatic execution of this cli
+    /// throughout automatic execution of this cli. The `usage_suffix` input used
+    /// for this method is used for [Subcommand] help where the subcommand in
+    /// question would like to display itself on the end of the top usage line
+    /// for the header
     ///
     /// # Example
     ///
@@ -252,10 +293,10 @@ impl<'a> CliMake<'a> {
     ///
     /// fn main() {
     ///     let cli = CliMake::new(
-    ///         "My app", vec![], "A simple application", "0.1.0"
+    ///         "My app", vec![], vec![], "A simple application", "0.1.0"
     ///     );
     ///
-    ///     cli.header_msg(&mut io::stdout()).unwrap();
+    ///     cli.header_msg(None, &mut io::stdout()).unwrap();
     /// }
     /// ```
     ///
@@ -266,13 +307,19 @@ impl<'a> CliMake<'a> {
     ///
     ///   My app v0.1.0 — A simple application
     /// ```
-    pub fn header_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
+    pub fn header_msg(&self, usage_suffix: impl Into<Option<&'a str>>, buf: &mut impl Write) -> std::io::Result<()> {
         let cur_exe = env::current_exe();
 
-        buf.write_fmt(format_args!(
-            "Usage: ./{} [OPTIONS]\n",
-            cur_exe.unwrap().file_stem().unwrap().to_str().unwrap()
-        ))?;
+        match usage_suffix.into() { // parse suffix into usage line
+            Some(suffix) => buf.write_fmt(format_args!(
+                "Usage: ./{} [OPTIONS] {}\n",
+                cur_exe.unwrap().file_stem().unwrap().to_str().unwrap(), suffix
+            ))?,
+            None => buf.write_fmt(format_args!(
+                "Usage: ./{} [OPTIONS]\n",
+                cur_exe.unwrap().file_stem().unwrap().to_str().unwrap()
+            ))?
+        }
 
         match self.description.clone() {
             Some(d) => {
@@ -315,7 +362,7 @@ impl<'a> CliMake<'a> {
     ///     ];
     ///
     ///     let cli = CliMake::new(
-    ///         "My app", args, "A simple application", "0.1.0"
+    ///         "My app", args, vec![], "A simple application", "0.1.0"
     ///     );
     ///
     ///     cli.help_msg(&mut io::stdout()).unwrap();
@@ -333,17 +380,27 @@ impl<'a> CliMake<'a> {
     ///   (-v, --verbose) — Verbose mode
     /// ```
     pub fn help_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
-        self.header_msg(buf)?;
+        self.header_msg(None, buf)?;
 
-        if self.arguments.len() != 0 {
-            buf.write("\nArguments:\n".as_bytes())?;
+        buf.write("\nArguments:\n".as_bytes())?;
 
+        if self.arguments.len() > 0 {
             for argument in self.arguments.iter() {
                 argument.help_msg(buf)?;
             }
+        } else {
+            buf.write("  No arguments found\n".as_bytes())?;
         }
 
-        // TODO: subcommends
+        buf.write("\nSubcommands:\n".as_bytes())?;
+
+        if self.subcommands.len() > 0 {
+            for subcommand in self.subcommands.iter() {
+                subcommand.help_msg(&self, buf)?;
+            }
+        } else {
+            buf.write("  No subcommands found\n".as_bytes())?;
+        }
 
         Ok(())
     }

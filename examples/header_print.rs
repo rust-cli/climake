@@ -11,17 +11,19 @@ fn main() -> io::Result<()> {
     CliMake::new(
         "Example program",
         vec![],
+        vec![],
         "A simple description",
         "1.0.0"
-    ).header_msg(&mut io::stdout())?;
+    ).header_msg(None, &mut io::stdout())?;
 
     println!("{0}\n\nLong:\n{0}", DIVIDER);
     CliMake::new(
         "Example program", 
         vec![], 
+        vec![], 
         "A very long description, designed to potentially span multiple lines to test the prowess of formatting climake uses",
         "1.0.0"
-    ).header_msg(&mut io::stdout())?;
+    ).header_msg(None, &mut io::stdout())?;
     println!("{}", DIVIDER);
 
     Ok(())

@@ -29,6 +29,7 @@ fn main() -> std::io::Result<()> {
     let cli = CliMake::new(
         "Help info",
         arguments,
+        vec![],
         "A simple utility cli to print help info",
         "1.0.0",
     );
