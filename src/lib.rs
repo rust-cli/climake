@@ -9,7 +9,7 @@ const HELP_DEFAULT: &str = "No help provided";
 const CLI_TABBING: &str = "  ";
 
 /// A single type of call for an [Argument], can be a short call or a long call
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum CallType {
     /// Short, single-char call, e.g. `-h`
     Short(char),
@@ -30,7 +30,7 @@ impl fmt::Display for CallType {
 /// An input type, typically given for an [Argument] to descibe what types are
 /// allowed to be passwed in. This is then transferred to [Data] once the cli
 /// has been executed
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Input {
     /// No input allowed, will error if any is given
     None,
@@ -60,7 +60,7 @@ impl fmt::Display for Input {
 }
 
 /// An argument, infomaton coming soon..
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Argument<'a> {
     /// Optional help message
     help: Option<&'a str>,
@@ -98,7 +98,7 @@ impl<'a> Argument<'a> {
         }
     }
 
-    /// Generates help message for current [Argument]
+    /// Generates compact help message for current [Argument]
     ///
     /// This writes directly to a buffer of some kind (typically [std::io::stdout])
     /// for simplicity, perf and extendability reasons.
@@ -125,7 +125,7 @@ impl<'a> Argument<'a> {
     /// ```none
     ///   (-v, --verbose) — Verbose mode
     /// ```
-    pub fn help_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
+    pub fn help_name_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
         let mut lc_buf: Vec<String> = Vec::new();
         let mut sc_buf: Vec<char> = Vec::new();
 
@@ -168,21 +168,29 @@ impl<'a> Argument<'a> {
 
 /// Subcommand attached to a cli, allowing non-argument commands to be executed
 /// with arguments attached to oneself for more complex operations
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Subcommand<'a> {
     /// Name of subcommand, used both in help and as the single calling method
     pub name: &'a str,
 
     /// Argument(s) attached to this [Subcommand], if any
-    pub arguments: Vec<Argument<'a>>
+    pub arguments: Vec<Argument<'a>>,
+
+    /// Recursive subcommands attached to this [Subcommand], if any
+    pub subcommands: Vec<Subcommand<'a>>,
+
+    /// Optional short description of this subcommand
+    pub help: Option<&'a str>,
 }
 
 impl<'a> Subcommand<'a> {
     /// Creates a new subcommand from given abstracted inputs
-    pub fn new(name: impl Into<&'a str>, arguments: impl Into<Vec<Argument<'a>>>) -> Self {
+    pub fn new(name: impl Into<&'a str>, arguments: impl Into<Vec<Argument<'a>>>, subcommands: impl Into<Vec<Subcommand<'a>>>, help: impl Into<Option<&'a str>>) -> Self {
         Self {
             name: name.into(),
-            arguments: arguments.into()
+            arguments: arguments.into(),
+            subcommands: subcommands.into(),
+            help: help.into()
         }
     }
 
@@ -195,12 +203,75 @@ impl<'a> Subcommand<'a> {
     pub fn help_msg(&self, climake: &CliMake, buf: &mut impl Write) -> std::io::Result<()> {
         climake.header_msg(self.name, buf)?;
 
-        unimplemented!()
+        match self.help {
+            Some(help) => {buf.write("\nAbout:\n".as_bytes())?;
+            writeln_term(help, buf)?;}
+            None => ()
+        };
+
+        // TODO: merge this into a utility func shared with CliMake::help_msg
+        buf.write("\nArguments:\n".as_bytes())?;
+
+        if self.arguments.len() > 0 {
+            for argument in self.arguments.iter() {
+                argument.help_name_msg(buf)?;
+            }
+        } else {
+            buf.write("  No arguments found\n".as_bytes())?;
+        }
+
+        buf.write("\nSubcommands:\n".as_bytes())?;
+
+        if self.subcommands.len() > 0 {
+            for subcommand in self.subcommands.iter() {
+                subcommand.help_name_msg(buf)?;
+            }
+        } else {
+            buf.write("  No subcommands found\n".as_bytes())?;
+        }
+
+        Ok(())
+    }
+
+    /// Generates compact help message for current [Subcommand]
+    ///
+    /// This writes directly to a buffer of some kind (typically [std::io::stdout])
+    /// for simplicity, perf and extendability reasons.
+    ///
+    /// # Example
+    ///
+    /// Usage:
+    ///
+    /// ```rust
+    /// use std::io;
+    /// use climake::{Subcommand, Input};
+    ///
+    /// fn main() {
+    ///     let subcmd = Subcommand::new(
+    ///         "example", vec!['v'], vec!["verbose"], "A simple example subcommand"
+    ///     );
+    ///
+    ///     subcmd.help_msg(&mut io::stdout()).unwrap();
+    /// }
+    /// ```
+    ///
+    /// What this may look like:
+    ///
+    /// ```none
+    ///   example — A simple example subcommand
+    /// ```
+    pub fn help_name_msg(&self, buf: &mut impl Write) -> std::io::Result<()> {
+        let formatted_help = match self.help {
+            Some(msg) => msg,
+            None => HELP_DEFAULT,
+        };
+
+        writeln_term(format!("{} — {}", self.name, formatted_help), buf)
     }
 }
 
 /// Main cli structure, infomaton coming soon..
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct CliMake<'a> {
     /// Name of the program using the cli
     name: &'a str,
@@ -312,7 +383,7 @@ impl<'a> CliMake<'a> {
 
         match usage_suffix.into() { // parse suffix into usage line
             Some(suffix) => buf.write_fmt(format_args!(
-                "Usage: ./{} [OPTIONS] {}\n",
+                "Usage: ./{} {} [OPTIONS]\n",
                 cur_exe.unwrap().file_stem().unwrap().to_str().unwrap(), suffix
             ))?,
             None => buf.write_fmt(format_args!(
@@ -386,7 +457,7 @@ impl<'a> CliMake<'a> {
 
         if self.arguments.len() > 0 {
             for argument in self.arguments.iter() {
-                argument.help_msg(buf)?;
+                argument.help_name_msg(buf)?;
             }
         } else {
             buf.write("  No arguments found\n".as_bytes())?;
@@ -408,7 +479,7 @@ impl<'a> CliMake<'a> {
 
 /// Writes a given buffer to terminal using [LineWriter] and splits every 80
 //// characters, making it ideal for concise terminal displays for help messages
-fn writeln_term(to_write: impl Into<String>, buf: impl Write) -> std::io::Result<()> {
+fn writeln_term(to_write: impl Into<String>, buf: &mut impl Write) -> std::io::Result<()> {
     let mut line_buf = LineWriter::new(buf);
     let newline_byte = "\n".as_bytes();
 
@@ -441,10 +512,10 @@ mod tests {
     }
 
     #[test]
-    fn arg_full_help() -> std::io::Result<()> {
+    fn arg_name_help() -> std::io::Result<()> {
         let mut chk_vec: Vec<u8> = vec![];
 
-        Argument::new(None, vec![], vec![], Input::None).help_msg(&mut chk_vec)?;
+        Argument::new(None, vec![], vec![], Input::None).help_name_msg(&mut chk_vec)?;
         assert_eq!(
             std::str::from_utf8(chk_vec.as_slice()).unwrap(),
             "  () — No help provided\n"
@@ -452,14 +523,14 @@ mod tests {
         chk_vec = vec![];
 
         Argument::new("Some simple help", vec!['a'], vec!["long"], Input::Text)
-            .help_msg(&mut chk_vec)?;
+            .help_name_msg(&mut chk_vec)?;
         assert_eq!(
             std::str::from_utf8(chk_vec.as_slice()).unwrap(),
             "  (-a, --long) [text] — Some simple help\n"
         );
         chk_vec = vec![];
 
-        Argument::new(None, vec!['a'], vec![], Input::Text).help_msg(&mut chk_vec)?;
+        Argument::new(None, vec!['a'], vec![], Input::Text).help_name_msg(&mut chk_vec)?;
         assert_eq!(
             std::str::from_utf8(chk_vec.as_slice()).unwrap(),
             "  -a [text] — No help provided\n"
