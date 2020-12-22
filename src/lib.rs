@@ -1,5 +1,5 @@
 use std::io::{prelude::*, LineWriter};
-use std::{env, fmt};
+use std::{env::current_exe, fmt};
 
 /// Default help message for [Argument]s without help added
 const HELP_DEFAULT: &str = "No help provided";
@@ -390,19 +390,14 @@ impl<'a> CliMake<'a> {
         usage_suffix: impl Into<Option<&'a str>>,
         buf: &mut impl Write,
     ) -> std::io::Result<()> {
-        let cur_exe = env::current_exe();
+        let cur_exe = current_exe().unwrap(); // TODO: better errors
+        let cur_stem = cur_exe.file_stem().unwrap().to_str().unwrap(); // TOOD: better errors
 
         match usage_suffix.into() {
-            // parse suffix into usage line
-            Some(suffix) => buf.write_fmt(format_args!(
-                "Usage: ./{} {} [OPTIONS]\n",
-                cur_exe.unwrap().file_stem().unwrap().to_str().unwrap(),
-                suffix
-            ))?,
-            None => buf.write_fmt(format_args!(
-                "Usage: ./{} [OPTIONS]\n",
-                cur_exe.unwrap().file_stem().unwrap().to_str().unwrap()
-            ))?,
+            Some(suffix) => {
+                buf.write_fmt(format_args!("Usage: ./{} {} [OPTIONS]\n", cur_stem, suffix))?
+            }
+            None => buf.write_fmt(format_args!("Usage: ./{} [OPTIONS]\n", cur_stem))?,
         }
 
         match self.description.clone() {
