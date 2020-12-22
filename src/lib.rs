@@ -185,12 +185,17 @@ pub struct Subcommand<'a> {
 
 impl<'a> Subcommand<'a> {
     /// Creates a new subcommand from given abstracted inputs
-    pub fn new(name: impl Into<&'a str>, arguments: impl Into<Vec<Argument<'a>>>, subcommands: impl Into<Vec<Subcommand<'a>>>, help: impl Into<Option<&'a str>>) -> Self {
+    pub fn new(
+        name: impl Into<&'a str>,
+        arguments: impl Into<Vec<Argument<'a>>>,
+        subcommands: impl Into<Vec<Subcommand<'a>>>,
+        help: impl Into<Option<&'a str>>,
+    ) -> Self {
         Self {
             name: name.into(),
             arguments: arguments.into(),
             subcommands: subcommands.into(),
-            help: help.into()
+            help: help.into(),
         }
     }
 
@@ -204,9 +209,11 @@ impl<'a> Subcommand<'a> {
         climake.header_msg(self.name, buf)?;
 
         match self.help {
-            Some(help) => {buf.write("\nAbout:\n".as_bytes())?;
-            writeln_term(help, buf)?;}
-            None => ()
+            Some(help) => {
+                buf.write("\nAbout:\n".as_bytes())?;
+                writeln_term(help, buf)?;
+            }
+            None => (),
         };
 
         // TODO: merge this into a utility func shared with CliMake::help_msg
@@ -378,18 +385,24 @@ impl<'a> CliMake<'a> {
     ///
     ///   My app v0.1.0 — A simple application
     /// ```
-    pub fn header_msg(&self, usage_suffix: impl Into<Option<&'a str>>, buf: &mut impl Write) -> std::io::Result<()> {
+    pub fn header_msg(
+        &self,
+        usage_suffix: impl Into<Option<&'a str>>,
+        buf: &mut impl Write,
+    ) -> std::io::Result<()> {
         let cur_exe = env::current_exe();
 
-        match usage_suffix.into() { // parse suffix into usage line
+        match usage_suffix.into() {
+            // parse suffix into usage line
             Some(suffix) => buf.write_fmt(format_args!(
                 "Usage: ./{} {} [OPTIONS]\n",
-                cur_exe.unwrap().file_stem().unwrap().to_str().unwrap(), suffix
+                cur_exe.unwrap().file_stem().unwrap().to_str().unwrap(),
+                suffix
             ))?,
             None => buf.write_fmt(format_args!(
                 "Usage: ./{} [OPTIONS]\n",
                 cur_exe.unwrap().file_stem().unwrap().to_str().unwrap()
-            ))?
+            ))?,
         }
 
         match self.description.clone() {
