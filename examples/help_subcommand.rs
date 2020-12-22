@@ -8,10 +8,10 @@ fn main() -> io::Result<()> {
     let subcmd_img = Subcommand::new("img", vec![], vec![], "An image");
     let subcmd_text = Subcommand::new("text", vec![], vec![], "Textual input");
 
-    let subcmd_add = Subcommand::new("add", vec![], vec![subcmd_img.clone(), subcmd_text.clone()], "Adds a new post");
-    let subcmd_rem = Subcommand::new("rem", vec![], vec![subcmd_img, subcmd_text], "Removes an existing post");
+    let subcmd_add = Subcommand::new("add", vec![], vec![&subcmd_img, &subcmd_text], "Adds a new post");
+    let subcmd_rem = Subcommand::new("rem", vec![], vec![&subcmd_img, &subcmd_text], "Removes an existing post");
 
-    let cli = CliMake::new("subcommandsgalore", vec![], vec![subcmd_add.clone(), subcmd_rem.clone()], "A demonstration cli to show subcommand help", None);
+    let cli = CliMake::new("subcommandsgalore", vec![], vec![&subcmd_add, &subcmd_rem], "A demonstration cli to show subcommand help", None);
 
     println!("Help message overall:\n----");
     cli.help_msg(&mut io::stdout())?;

@@ -5,30 +5,12 @@ use climake::{Argument, CliMake, Input};
 use std::io;
 
 fn main() -> std::io::Result<()> {
-    let arguments = vec![
-        Argument::new(
-            "Toggles on verbose output",
-            vec!['v'],
-            vec!["verbose"],
-            Input::None,
-        ),
-        Argument::new(
-            "Toggles on debug mode",
-            vec!['d'],
-            vec!["debug"],
-            Input::None,
-        ),
-        Argument::new(
-            "Path to load from",
-            vec!['p', 'f'],
-            vec!["path", "file"],
-            Input::Path,
-        ),
-    ];
+    let verbose = Argument::new("Toggles verbose mode", vec!['v'], vec!["verbose"], Input::None);
+    let debug = Argument::new("Toggles debug infomation", vec!['d'], vec!["debug"], Input::None);
 
     let cli = CliMake::new(
         "Help info",
-        arguments,
+        vec![&verbose, &debug],
         vec![],
         "A simple utility cli to print help info",
         "1.0.0",

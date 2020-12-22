@@ -187,10 +187,10 @@ pub struct Subcommand<'a> {
     pub name: &'a str,
 
     /// Argument(s) attached to this [Subcommand], if any
-    pub arguments: Vec<Argument<'a>>,
+    pub arguments: Vec<&'a Argument<'a>>,
 
     /// Recursive subcommands attached to this [Subcommand], if any
-    pub subcommands: Vec<Subcommand<'a>>,
+    pub subcommands: Vec<&'a Subcommand<'a>>,
 
     /// Optional short description of this subcommand
     pub help: Option<&'a str>,
@@ -200,8 +200,8 @@ impl<'a> Subcommand<'a> {
     /// Creates a new subcommand from given abstracted inputs
     pub fn new(
         name: impl Into<&'a str>,
-        arguments: impl Into<Vec<Argument<'a>>>,
-        subcommands: impl Into<Vec<Subcommand<'a>>>,
+        arguments: impl Into<Vec<&'a Argument<'a>>>,
+        subcommands: impl Into<Vec<&'a Subcommand<'a>>>,
         help: impl Into<Option<&'a str>>,
     ) -> Self {
         Self {
@@ -297,10 +297,10 @@ pub struct CliMake<'a> {
     name: &'a str,
 
     /// Internal [Argument]s stored inside the cli once created/added to
-    arguments: Vec<Argument<'a>>,
+    arguments: Vec<&'a Argument<'a>>,
 
     /// Internal [Subcommand]s stored inside the cli once created/added to
-    subcommands: Vec<Subcommand<'a>>,
+    subcommands: Vec<&'a Subcommand<'a>>,
 
     /// Optional short description of the program using the cli
     description: Option<&'a str>,
@@ -333,8 +333,8 @@ impl<'a> CliMake<'a> {
     /// Creates a new [Argument] from given passed values
     pub fn new(
         name: impl Into<&'a str>,
-        arguments: impl Into<Vec<Argument<'a>>>,
-        subcommands: impl Into<Vec<Subcommand<'a>>>,
+        arguments: impl Into<Vec<&'a Argument<'a>>>,
+        subcommands: impl Into<Vec<&'a Subcommand<'a>>>,
         description: impl Into<Option<&'a str>>,
         version: impl Into<Option<&'a str>>,
     ) -> Self {
@@ -349,12 +349,12 @@ impl<'a> CliMake<'a> {
     }
 
     /// Adds a single argument to this root [CliMake]
-    pub fn add_arg(&mut self, argument: impl Into<Argument<'a>>) {
+    pub fn add_arg(&mut self, argument: impl Into<&'a Argument<'a>>) {
         self.arguments.push(argument.into())
     }
 
     /// Adds multiple arguments to this root [CliMake]
-    pub fn add_args(&mut self, arguments: impl IntoIterator<Item = Argument<'a>>) {
+    pub fn add_args(&mut self, arguments: impl IntoIterator<Item = &'a Argument<'a>>) {
         for arg in arguments.into_iter() {
             self.add_arg(arg)
         }
@@ -449,12 +449,15 @@ impl<'a> CliMake<'a> {
     /// use climake::{CliMake, Argument, Input};
     ///
     /// fn main() {
-    ///     let args = vec![
-    ///         Argument::new("Verbose mode", vec!['v'], vec!["verbose"], Input::None)
-    ///     ];
+    ///     let verbose = Argument::new(
+    ///         "Toggles verbose mode",
+    ///         vec!['v'],
+    ///         vec!["verbose"],
+    ///         Input::None
+    ///     );
     ///
     ///     let cli = CliMake::new(
-    ///         "My app", args, vec![], "A simple application", "0.1.0"
+    ///         "My app", vec![&verbose], vec![], "A simple application", "0.1.0"
     ///     );
     ///
     ///     cli.help_msg(&mut io::stdout()).unwrap();
