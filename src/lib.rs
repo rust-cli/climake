@@ -486,7 +486,7 @@ impl<'a> CliMake<'a> {
 }
 
 /// Writes a given buffer to terminal using [LineWriter] and splits every 80
-//// characters, making it ideal for concise terminal displays for help messages
+/// characters, making it ideal for concise terminal displays for help messages
 fn writeln_term(to_write: impl Into<String>, buf: &mut impl Write) -> std::io::Result<()> {
     let mut line_buf = LineWriter::new(buf);
     let newline_byte = "\n".as_bytes();
@@ -542,6 +542,20 @@ mod tests {
         assert_eq!(
             std::str::from_utf8(chk_vec.as_slice()).unwrap(),
             "  -a [text] — No help provided\n"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn subcommand_name_help() -> std::io::Result<()> {
+        let mut chk_vec: Vec<u8> = vec![];
+
+        Subcommand::new("command", vec![], vec![], "A simple command")
+            .help_name_msg(&mut chk_vec)?;
+        assert_eq!(
+            std::str::from_utf8(chk_vec.as_slice()).unwrap(),
+            "  command — A simple command\n"
         );
 
         Ok(())
