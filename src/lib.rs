@@ -467,7 +467,7 @@ impl<'a> CliMake<'a> {
 
         if self.subcommands.len() > 0 {
             for subcommand in self.subcommands.iter() {
-                subcommand.help_msg(&self, buf)?;
+                subcommand.help_name_msg(buf)?;
             }
         } else {
             buf.write("  No subcommands found\n".as_bytes())?;
