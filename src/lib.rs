@@ -70,6 +70,13 @@ pub struct Argument<'a> {
 
     /// [Input] type allowed for this argument
     input: Input,
+
+    /// Required argument for given root cli or [Subcommand]. If this argument is
+    /// not present whilst the cli parses, it will provide an apt error
+    ///
+    /// To change the default behaviour of `false` (not required), simply modify
+    /// this value before it's time to parse.
+    required: bool,
 }
 
 impl<'a> Argument<'a> {
@@ -95,6 +102,7 @@ impl<'a> Argument<'a> {
             help: help.into(),
             calls,
             input: input.into(),
+            required: false,
         }
     }
 
@@ -149,15 +157,20 @@ impl<'a> Argument<'a> {
             Some(msg) => msg,
             None => HELP_DEFAULT,
         };
+        let required_msg = if self.required { "[REQUIRED] " } else { "" };
 
         writeln_term(
             if formatted_calls.len() == 1 && formatted_calls[0] != "" {
-                format!("{} {}— {}", formatted_calls[0], self.input, formatted_help)
+                format!(
+                    "{} {}{}— {}",
+                    formatted_calls[0], self.input, required_msg, formatted_help
+                )
             } else {
                 format!(
-                    "({}) {}— {}",
+                    "({}) {}{}— {}",
                     formatted_calls.join(", "),
                     self.input,
+                    required_msg,
                     formatted_help,
                 )
             },
@@ -514,7 +527,8 @@ mod tests {
                     CallType::Long("there".to_string())
                 ],
                 help: None,
-                input: Input::Text
+                input: Input::Text,
+                required: false,
             }
         )
     }
@@ -542,6 +556,21 @@ mod tests {
         assert_eq!(
             std::str::from_utf8(chk_vec.as_slice()).unwrap(),
             "  -a [text] — No help provided\n"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn arg_name_help_required() -> std::io::Result<()> {
+        let mut chk_vec: Vec<u8> = vec![];
+
+        let mut arg = Argument::new("Some argument", vec!['s'], vec![], Input::None);
+        arg.required = true;
+        arg.help_name_msg(&mut chk_vec)?;
+        assert_eq!(
+            std::str::from_utf8(chk_vec.as_slice()).unwrap(),
+            "  -s [REQUIRED] — Some argument\n"
         );
 
         Ok(())
