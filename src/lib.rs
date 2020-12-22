@@ -116,7 +116,7 @@ impl<'a> Argument<'a> {
     ///         "Verbose mode", vec!['v'], vec!["verbose"], Input::None
     ///     );
     ///
-    ///     arg.help_msg(&mut io::stdout()).unwrap();
+    ///     arg.help_name_msg(&mut io::stdout()).unwrap();
     /// }
     /// ```
     ///
@@ -248,10 +248,10 @@ impl<'a> Subcommand<'a> {
     ///
     /// fn main() {
     ///     let subcmd = Subcommand::new(
-    ///         "example", vec!['v'], vec!["verbose"], "A simple example subcommand"
+    ///         "example", vec![], vec![], "A simple example subcommand"
     ///     );
     ///
-    ///     subcmd.help_msg(&mut io::stdout()).unwrap();
+    ///     subcmd.help_name_msg(&mut io::stdout()).unwrap();
     /// }
     /// ```
     ///
