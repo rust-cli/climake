@@ -58,6 +58,27 @@ impl fmt::Display for CallType {
     }
 }
 
+impl From<CallType> for String {
+    fn from(calltype: CallType) -> Self {
+        match calltype {
+            CallType::Short(c) => String::from(c),
+            CallType::Long(string) => string,
+        }
+    }
+}
+
+impl From<char> for CallType {
+    fn from(c: char) -> Self {
+        CallType::Short(c)
+    }
+}
+
+impl From<String> for CallType {
+    fn from(string: String) -> Self {
+        CallType::Long(string)
+    }
+}
+
 /// An input type, typically given for an [Argument] to descibe what types are
 /// allowed to be passwed in. This is then transferred to [Data] once the cli
 /// has been executed
@@ -186,6 +207,34 @@ impl<'a> Argument<'a> {
             input: input.into(),
             required: false,
         }
+    }
+
+    /// Adds a single short call (i.e. [CallType::Short]), chainable
+    pub fn add_scall(&mut self, short_call: impl Into<char>) -> &mut Self {
+        self.calls.push(short_call.into().into());
+        self
+    }
+
+    /// Adds multiple short calls (i.e. [CallType::Short]), chainable
+    pub fn add_scalls(&mut self, short_calls: impl IntoIterator<Item = char>) -> &mut Self {
+        for c in short_calls.into_iter() {
+            self.add_scall(c);
+        }
+        self
+    }
+
+    /// Adds a single long call (i.e. [CallType::Long]), chainable
+    pub fn add_lcall(&mut self, long_call: impl Into<String>) -> &mut Self {
+        self.calls.push(long_call.into().into());
+        self
+    }
+
+    /// Adds multiple long calls (i.e. [CallType::Long]), chainable
+    pub fn add_lcalls(&mut self, long_calls: impl IntoIterator<Item = String>) -> &mut Self {
+        for c in long_calls.into_iter() {
+            self.add_lcall(c);
+        }
+        self
     }
 
     /// Generates compact help message for current [Argument]
@@ -463,8 +512,8 @@ impl<'a> CliMake<'a> {
 
     /// Sets tabbing distance for current [CliMake], default is `2` spaces for
     /// tabs, chainable
-    pub fn tabbing(&mut self, tab_size: impl Into<&'static str>) -> &mut Self {
-        self.tabbing = tab_size.into();
+    pub fn tabbing(&mut self, tab_size: &'static str) -> &mut Self {
+        self.tabbing = tab_size;
         self
     }
 
@@ -746,6 +795,59 @@ mod tests {
         assert_eq!(cli.subcommands, vec![&subcmd, &subcmd])
     }
 
+    /// Checks that the [Argument::add_scall] method works correctly
+    #[test]
+    fn arg_add_scall() {
+        let mut arg = Argument::new("example", vec![], vec![], Input::None);
+
+        arg.add_scall('a').add_scall('b').add_scall('c');
+
+        assert_eq!(
+            arg,
+            Argument::new("example", vec!['a', 'b', 'c'], vec![], Input::None)
+        )
+    }
+
+    /// Checks that the [Argument::add_scalls] method works correctly
+    #[test]
+    fn arg_add_scalls() {
+        let mut arg = Argument::new("example", vec![], vec![], Input::None);
+
+        arg.add_scalls(vec!['a', 'b']).add_scalls(vec!['c']);
+
+        assert_eq!(
+            arg,
+            Argument::new("example", vec!['a', 'b', 'c'], vec![], Input::None)
+        )
+    }
+
+    /// Checks that the [Argument::add_lcall] method works correctly
+    #[test]
+    fn arg_add_lcall() {
+        let mut arg = Argument::new("example", vec![], vec![], Input::None);
+
+        arg.add_lcall("a").add_lcall("b").add_lcall("c");
+
+        assert_eq!(
+            arg,
+            Argument::new("example", vec![], vec!["a", "b", "c"], Input::None)
+        )
+    }
+
+    /// Checks that the [Argument::add_lcalls] method works correctly
+    #[test]
+    fn arg_add_lcalls() {
+        let mut arg = Argument::new("example", vec![], vec![], Input::None);
+
+        arg.add_lcalls(vec!["a".to_string(), "b".to_string()])
+            .add_lcalls(vec!["c".to_string()]);
+
+        assert_eq!(
+            arg,
+            Argument::new("example", vec![], vec!["a", "b", "c"], Input::None)
+        )
+    }
+
     /// Checks that the [Data::new] method works correctly
     #[test]
     fn data_new() {
@@ -786,6 +888,16 @@ mod tests {
         assert_eq!(
             Data::new(Input::Paths, vec![testval.clone(), testval.clone()]),
             Data::Paths(vec![PathBuf::from(testval.clone()), PathBuf::from(testval)])
+        );
+    }
+
+    /// Checks that the [From]<[CallType]> implementation for [String] works correctly
+    #[test]
+    fn string_from_calltype() {
+        assert_eq!(String::from(CallType::Short('h')), "h".to_string());
+        assert_eq!(
+            String::from(CallType::Long("testing".to_string())),
+            "testing".to_string()
         );
     }
 }
