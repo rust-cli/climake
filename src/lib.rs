@@ -29,6 +29,7 @@
 )]
 
 use std::io::{prelude::*, LineWriter};
+use std::path::PathBuf;
 use std::{env, fmt};
 
 /// Default help message for [Argument]s without help added
@@ -62,18 +63,19 @@ impl fmt::Display for CallType {
 /// has been executed
 #[derive(Debug, PartialEq, Clone)]
 pub enum Input {
-    /// No input allowed, will error if any is given
+    /// No input allowed, will error if any is given. Maps to [Data::None]
     None,
 
-    /// Text input allowed, this will return an empty string if no text is supplied
+    /// Text input allowed, this will return an empty string if no text is supplied.
+    /// Maps to [Data::Text]
     Text,
 
     /// A single [PathBuf] given to the argument, these are not certain to exist
-    /// and simply echo the user's input
+    /// and simply echo the user's input. Maps to [Data::Path]
     Path,
 
     /// Multiple [PathBuf]s given to the argument, these are not certain to exist
-    /// and simply echo the user's input
+    /// and simply echo the user's input. Maps to [Data::Paths]
     Paths,
 }
 
@@ -85,6 +87,56 @@ impl fmt::Display for Input {
             Input::Text => write!(f, "[text] "),
             Input::Path => write!(f, "[path] "),
             Input::Paths => write!(f, "[paths] "),
+        }
+    }
+}
+
+/// Outputted data from parsing a cli for each argument. This enumeration is based
+/// upon the allowed [Input] of a given [Argument] and maps directly to the input
+///
+/// # Mappings from [Input]
+///
+/// If a user requested for an [Argument] to be of [Input::Path],
+/// once parsed this enumeration would be [Data::Path] (in corrospondance with
+/// the name).
+#[derive(Debug, PartialEq, Clone)]
+pub enum Data {
+    /// No data provided, from [Input::None]
+    None,
+
+    /// Textual input provided, from [Input::Text]. This may be an empty string
+    /// in the case of the user not actually providing input
+    Text(String),
+
+    /// Path input provided, from [Input::Path]. This may be an empty or invalid
+    /// [PathBuf] in the case of user input being misleading or non-existant
+    Path(PathBuf),
+
+    /// Multiple path inputs provided, from [Input::Paths]. This may be an empty
+    /// vector (i.e. length 0) if the user doesn't provide any paths or may be
+    /// non-existant paths given from user input
+    Paths(Vec<PathBuf>),
+}
+
+impl Data {
+    /// Creates a new [Data] from with types mapping from [Input] using passed
+    /// `data`. This may map the `data` string vec into types such as `PathBuf`
+    pub fn new(input: Input, data: impl IntoIterator<Item = String>) -> Self {
+        match input {
+            Input::None => Data::None, // ignore passed `data` (if any)
+            Input::Text => match data.into_iter().next() {
+                Some(text) => Data::Text(text),
+                None => Data::Text(String::new()),
+            },
+            Input::Path => match data.into_iter().next() {
+                Some(path_string) => Data::Path(PathBuf::from(path_string)),
+                None => Data::Path(PathBuf::new()),
+            },
+            Input::Paths => Data::Paths(
+                data.into_iter()
+                    .map(|path_string| PathBuf::from(path_string))
+                    .collect(),
+            ),
         }
     }
 }
@@ -246,7 +298,7 @@ impl<'a> Subcommand<'a> {
     /// inside the execution of the cli
     ///
     /// A referenced [CliMake] is needed for this method due to it displaying a
-    /// header message using [CliMake::head_msg] with an altered usage line, as
+    /// header message using [CliMake::header_msg] with an altered usage line, as
     /// seen in the examples.
     pub fn help_msg(&self, climake: &CliMake, buf: &mut impl Write) -> std::io::Result<()> {
         climake.header_msg(self.name, buf)?;
@@ -419,7 +471,7 @@ impl<'a> CliMake<'a> {
     /// Generates header and streams to given [Write] buffer for displaying info
     /// about this cli.
     ///
-    /// Please check [CliMake::help] for the full help message generation used
+    /// Please check [CliMake::help_msg] for the full help message generation used
     /// throughout automatic execution of this cli. The `usage_suffix` input used
     /// for this method is used for [Subcommand] help where the subcommand in
     /// question would like to display itself on the end of the top usage line
@@ -489,7 +541,7 @@ impl<'a> CliMake<'a> {
     /// *public*-available methods inside of this library:
     ///
     /// - [CliMake::header_msg]: Header generation for help message and errors
-    /// - [Argument::help_msg]: Help generation for single [Argument]s
+    /// - [Argument::help_name_msg]: Help generation for single [Argument]s
     ///
     /// # Example
     ///
