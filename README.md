@@ -1,6 +1,6 @@
-# climake
+# climake 
 
-The simple, dependency-less cli library ✨
+The simple, dependency-free cli library ✨
 
 - [Crates.io](https://crates.io/crates/climake)
 - [Documentation](https://docs.rs/climake)

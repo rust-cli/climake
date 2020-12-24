@@ -1,5 +1,35 @@
+//! The simple, dependency-free cli library ✨
+//!
+//! - [Crates.io](https://crates.io/crates/climake)
+//! - [Documentation](https://docs.rs/climake)
+//! 
+//! # Example 📚
+//! 
+//! Rewrite example coming soon!
+//! 
+//! ## Installation 🚀
+//! 
+//! Simply add the following to your `Cargo.toml` file:
+//! 
+//! ```toml
+//! [dependencies]
+//! climake = "3.0" # note: rewrite isn't out just yet!
+//! ```
+//! 
+//! # License
+//! 
+//! Duel-licensed under both the [MIT License](https://opensource.org/licenses/MIT)
+//! ([`LICENSE-MIT`](LICENSE-MIT)) and [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0)
+//! ([`LICENSE-APACHE`](LICENSE-APACHE)), you may choose at your discretion.
+
+#![forbid(unsafe_code)]
+#![doc(
+    html_logo_url = "https://github.com/rust-cli/climake/raw/master/logo.png",
+    html_favicon_url = "https://github.com/rust-cli/climake/raw/master/logo.png"
+)]
+
 use std::io::{prelude::*, LineWriter};
-use std::{env::current_exe, fmt};
+use std::{env, fmt};
 
 /// Default help message for [Argument]s without help added
 const HELP_DEFAULT: &str = "No help provided";
@@ -407,7 +437,7 @@ impl<'a> CliMake<'a> {
         usage_suffix: impl Into<Option<&'a str>>,
         buf: &mut impl Write,
     ) -> std::io::Result<()> {
-        let cur_exe = current_exe().unwrap(); // TODO: better errors
+        let cur_exe = env::current_exe().unwrap(); // TODO: better errors
         let cur_stem = cur_exe.file_stem().unwrap().to_str().unwrap(); // TOOD: better errors
 
         match usage_suffix.into() {
