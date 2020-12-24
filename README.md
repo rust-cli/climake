@@ -5,6 +5,12 @@ The simple, dependency-free cli library ✨
 - [Crates.io](https://crates.io/crates/climake)
 - [Documentation](https://docs.rs/climake)
 
+---
+
+This branch represents the unpublished rewrite version of climake with many advantages compared to the original version which is no longer updated!
+
+---
+
 ## Example 📚
 
 Rewrite example coming soon!
