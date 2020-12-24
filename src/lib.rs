@@ -745,4 +745,47 @@ mod tests {
 
         assert_eq!(cli.subcommands, vec![&subcmd, &subcmd])
     }
+
+    /// Checks that the [Data::new] method works correctly
+    #[test]
+    fn data_new() {
+        let testval = String::from("Hi!");
+
+        // Data::None
+        assert_eq!(Data::new(Input::None, vec![]), Data::None);
+        assert_eq!(Data::new(Input::None, vec![testval.clone()]), Data::None);
+
+        // Data::Text
+        assert_eq!(Data::new(Input::Text, vec![]), Data::Text(String::new()));
+        assert_eq!(
+            Data::new(Input::Text, vec![testval.clone()]),
+            Data::Text(testval.clone())
+        );
+        assert_eq!(
+            Data::new(Input::Text, vec![testval.clone(), testval.clone()]),
+            Data::Text(testval.clone())
+        );
+
+        // Data::Path
+        assert_eq!(Data::new(Input::Path, vec![]), Data::Path(PathBuf::new()));
+        assert_eq!(
+            Data::new(Input::Path, vec![testval.clone()]),
+            Data::Path(PathBuf::from(testval.clone()))
+        );
+        assert_eq!(
+            Data::new(Input::Path, vec![testval.clone(), testval.clone()]),
+            Data::Path(PathBuf::from(testval.clone()))
+        );
+
+        // Data::Paths
+        assert_eq!(Data::new(Input::Paths, vec![]), Data::Paths(vec![]));
+        assert_eq!(
+            Data::new(Input::Paths, vec![testval.clone()]),
+            Data::Paths(vec![PathBuf::from(testval.clone())])
+        );
+        assert_eq!(
+            Data::new(Input::Paths, vec![testval.clone(), testval.clone()]),
+            Data::Paths(vec![PathBuf::from(testval.clone()), PathBuf::from(testval)])
+        );
+    }
 }
