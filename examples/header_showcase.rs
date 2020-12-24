@@ -4,7 +4,8 @@
 use climake::CliMake;
 use std::io;
 
-const DIVIDER: &str = "--------------------------------------------------------------------------------";
+const DIVIDER: &str =
+    "--------------------------------------------------------------------------------";
 
 fn main() -> io::Result<()> {
     let mut stdout = io::stdout();
@@ -15,8 +16,9 @@ fn main() -> io::Result<()> {
         vec![],
         vec![],
         "A simple description",
-        "1.0.0"
-    ).header_msg(None, &mut stdout)?;
+        "1.0.0",
+    )
+    .header_msg(None, &mut stdout)?;
 
     println!("{0}\n\nLong:\n{0}", DIVIDER);
     CliMake::new(
