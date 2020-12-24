@@ -209,13 +209,13 @@ impl<'a> Argument<'a> {
         }
     }
 
-    /// Adds a single short call (i.e. [CallType::Short]), chainable
+    /// Adds a single short call, chainable
     pub fn add_scall(&mut self, short_call: impl Into<char>) -> &mut Self {
         self.calls.push(short_call.into().into());
         self
     }
 
-    /// Adds multiple short calls (i.e. [CallType::Short]), chainable
+    /// Adds multiple short calls, chainable
     pub fn add_scalls(&mut self, short_calls: impl IntoIterator<Item = char>) -> &mut Self {
         for c in short_calls.into_iter() {
             self.add_scall(c);
@@ -223,13 +223,13 @@ impl<'a> Argument<'a> {
         self
     }
 
-    /// Adds a single long call (i.e. [CallType::Long]), chainable
+    /// Adds a single long call, chainable
     pub fn add_lcall(&mut self, long_call: impl Into<String>) -> &mut Self {
         self.calls.push(long_call.into().into());
         self
     }
 
-    /// Adds multiple long calls (i.e. [CallType::Long]), chainable
+    /// Adds multiple long calls, chainable
     pub fn add_lcalls(&mut self, long_calls: impl IntoIterator<Item = String>) -> &mut Self {
         for c in long_calls.into_iter() {
             self.add_lcall(c);
