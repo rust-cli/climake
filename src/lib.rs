@@ -348,21 +348,25 @@ impl<'a> CliMake<'a> {
         }
     }
 
-    /// Adds a single argument to this root [CliMake]
-    pub fn add_arg(&mut self, argument: impl Into<&'a Argument<'a>>) {
-        self.arguments.push(argument.into())
+    /// Adds a single argument to this root [CliMake], chainable
+    pub fn add_arg(&mut self, argument: impl Into<&'a Argument<'a>>) -> &mut Self {
+        self.arguments.push(argument.into());
+        self
     }
 
-    /// Adds multiple arguments to this root [CliMake]
-    pub fn add_args(&mut self, arguments: impl IntoIterator<Item = &'a Argument<'a>>) {
+    /// Adds multiple arguments to this root [CliMake], chainable
+    pub fn add_args(&mut self, arguments: impl IntoIterator<Item = &'a Argument<'a>>) -> &mut Self {
         for arg in arguments.into_iter() {
-            self.add_arg(arg)
+            self.add_arg(arg);
         }
+        self
     }
 
-    /// Sets tabbing distance for current [CliMake], default is `2` spaces for tabs
-    pub fn tabbing(&mut self, tab_size: impl Into<&'static str>) {
+    /// Sets tabbing distance for current [CliMake], default is `2` spaces for
+    /// tabs, chainable
+    pub fn tabbing(&mut self, tab_size: impl Into<&'static str>) -> &mut Self {
         self.tabbing = tab_size.into();
+        self
     }
 
     /// Generates header and streams to given [Write] buffer for displaying info
@@ -518,6 +522,7 @@ fn writeln_term(to_write: impl Into<String>, buf: &mut impl Write) -> std::io::R
 mod tests {
     use super::*;
 
+    /// Checks that the [Argument::new] method (creation of arguments) works correctly
     #[test]
     fn arg_new() {
         assert_eq!(
@@ -536,6 +541,7 @@ mod tests {
         )
     }
 
+    /// Checks that the [Argument::help_name_msg] method works correctly
     #[test]
     fn arg_name_help() -> std::io::Result<()> {
         let mut chk_vec: Vec<u8> = vec![];
@@ -564,6 +570,8 @@ mod tests {
         Ok(())
     }
 
+    /// Checks that the [Argument::help_name_msg] method works correctly with [Argument::required]
+    /// set to `true`
     #[test]
     fn arg_name_help_required() -> std::io::Result<()> {
         let mut chk_vec: Vec<u8> = vec![];
@@ -579,6 +587,7 @@ mod tests {
         Ok(())
     }
 
+    /// Checks that the [Subcommand::help_name_msg] method works correctly
     #[test]
     fn subcommand_name_help() -> std::io::Result<()> {
         let mut chk_vec: Vec<u8> = vec![];
@@ -591,5 +600,27 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    /// Checks that the [CliMake::add_arg] method works correctly
+    #[test]
+    fn cli_add_arg() {
+        let mut cli = CliMake::new("example", vec![], vec![], "Add arg check", None);
+        let arg = Argument::new("arg help", vec![], vec![], Input::None);
+
+        cli.add_arg(&arg).add_arg(&arg);
+
+        assert_eq!(cli.arguments, vec![&arg, &arg])
+    }
+
+    /// Checks that the [CliMake::add_args] method works correctly
+    #[test]
+    fn cli_add_args() {
+        let mut cli = CliMake::new("example", vec![], vec![], "Add arg check", None);
+        let arg = Argument::new("arg help", vec![], vec![], Input::None);
+
+        cli.add_args(vec![&arg, &arg]).add_args(vec![&arg, &arg]);
+
+        assert_eq!(cli.arguments, vec![&arg, &arg, &arg, &arg])
     }
 }
