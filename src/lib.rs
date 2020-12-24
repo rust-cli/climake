@@ -399,7 +399,10 @@ impl<'a> CliMake<'a> {
     }
 
     /// Adds multiple subcommands to this root [CliMake], chainable
-    pub fn add_subcmds(&mut self, subcommands: impl IntoIterator<Item = &'a Subcommand<'a>>) -> &mut Self {
+    pub fn add_subcmds(
+        &mut self,
+        subcommands: impl IntoIterator<Item = &'a Subcommand<'a>>,
+    ) -> &mut Self {
         for subcommand in subcommands.into_iter() {
             self.add_subcmd(subcommand);
         }
@@ -674,7 +677,8 @@ mod tests {
         let mut cli = CliMake::new("example", vec![], vec![], "Add arg check", None);
         let subcmd = Subcommand::new("example", vec![], vec![], None);
 
-        cli.add_subcmds(vec![&subcmd, &subcmd]).add_subcmds(vec![&subcmd, &subcmd]);
+        cli.add_subcmds(vec![&subcmd, &subcmd])
+            .add_subcmds(vec![&subcmd, &subcmd]);
 
         assert_eq!(cli.subcommands, vec![&subcmd, &subcmd, &subcmd, &subcmd])
     }
