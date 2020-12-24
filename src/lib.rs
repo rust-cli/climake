@@ -392,6 +392,20 @@ impl<'a> CliMake<'a> {
         self
     }
 
+    /// Adds a single subcommand to this root [CliMake], chainable
+    pub fn add_subcmd(&mut self, subcommand: impl Into<&'a Subcommand<'a>>) -> &mut Self {
+        self.subcommands.push(subcommand.into());
+        self
+    }
+
+    /// Adds multiple subcommands to this root [CliMake], chainable
+    pub fn add_subcmds(&mut self, subcommands: impl IntoIterator<Item = &'a Subcommand<'a>>) -> &mut Self {
+        for subcommand in subcommands.into_iter() {
+            self.add_subcmd(subcommand);
+        }
+        self
+    }
+
     /// Sets tabbing distance for current [CliMake], default is `2` spaces for
     /// tabs, chainable
     pub fn tabbing(&mut self, tab_size: impl Into<&'static str>) -> &mut Self {
@@ -652,5 +666,27 @@ mod tests {
         cli.add_args(vec![&arg, &arg]).add_args(vec![&arg, &arg]);
 
         assert_eq!(cli.arguments, vec![&arg, &arg, &arg, &arg])
+    }
+
+    /// Checks that the [CliMake::add_subcmds] method works correctly
+    #[test]
+    fn cli_add_subcmds() {
+        let mut cli = CliMake::new("example", vec![], vec![], "Add arg check", None);
+        let subcmd = Subcommand::new("example", vec![], vec![], None);
+
+        cli.add_subcmds(vec![&subcmd, &subcmd]).add_subcmds(vec![&subcmd, &subcmd]);
+
+        assert_eq!(cli.subcommands, vec![&subcmd, &subcmd, &subcmd, &subcmd])
+    }
+
+    /// Checks that the [CliMake::add_subcmd] method works correctly
+    #[test]
+    fn cli_add_subcmd() {
+        let mut cli = CliMake::new("example", vec![], vec![], "Add arg check", None);
+        let subcmd = Subcommand::new("example", vec![], vec![], None);
+
+        cli.add_subcmd(&subcmd).add_subcmd(&subcmd);
+
+        assert_eq!(cli.subcommands, vec![&subcmd, &subcmd])
     }
 }
