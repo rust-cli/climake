@@ -5,10 +5,10 @@
 //! This prelude is small as climake itself isn't a woefully complex library,
 //! here's what this prelude includes:
 //!
-//! - [climake::Argument]
-//! - [climake::CliMake]
-//! - [climake::Data]
-//! - [climake::Input]
-//! - [climake::Subcommand]
+//! - [climake::Argument](Argument)
+//! - [climake::CliMake](CliMake)
+//! - [climake::Data](Data)
+//! - [climake::Input](Input)
+//! - [climake::Subcommand](Subcommand)
 
 pub use crate::{Argument, CliMake, Data, Input, Subcommand};
