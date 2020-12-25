@@ -1,7 +1,7 @@
 //! Example of the most empty possible CLI you can make, to showcase edge case
 //! handling in regards to help generation
 
-use climake::CliMake;
+use climake::prelude::*;
 use std::io;
 
 fn main() -> io::Result<()> {

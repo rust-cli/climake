@@ -1,7 +1,7 @@
 //! Example to show help generation in action. Please note that this does not
 //! parse any cli infomation, but just simply prints out infomation about this cli
 
-use climake::{Argument, CliMake, Input};
+use climake::prelude::*;
 use std::io;
 
 fn main() -> std::io::Result<()> {

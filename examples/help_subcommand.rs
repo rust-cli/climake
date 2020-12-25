@@ -1,7 +1,7 @@
 //! Example showing a demonstration subcommand utilising help generation for itself
 //! with semi-complex recursion/duplication of subcommands
 
-use climake::{CliMake, Subcommand};
+use climake::prelude::*;
 use std::io;
 
 fn main() -> io::Result<()> {

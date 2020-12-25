@@ -1,7 +1,7 @@
 //! Example which simply prints header infomation. Please note that this does not
 //! parse any cli infomation, but just simply prints out infomation about this cli
 
-use climake::CliMake;
+use climake::prelude::*;
 use std::io;
 
 const DIVIDER: &str =

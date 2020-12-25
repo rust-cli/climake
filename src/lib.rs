@@ -250,7 +250,7 @@ impl<'a> Argument<'a> {
     ///
     /// ```rust
     /// use std::io;
-    /// use climake::{Argument, Input};
+    /// use climake::prelude::*;
     ///
     /// fn main() {
     ///     let arg = Argument::new(
@@ -397,7 +397,7 @@ impl<'a> Subcommand<'a> {
     ///
     /// ```rust
     /// use std::io;
-    /// use climake::{Subcommand, Input};
+    /// use climake::prelude::*;
     ///
     /// fn main() {
     ///     let subcmd = Subcommand::new(
@@ -534,7 +534,7 @@ impl<'a> CliMake<'a> {
     ///
     /// ```rust
     /// use std::io;
-    /// use climake::CliMake;
+    /// use climake::prelude::*;
     ///
     /// fn main() {
     ///     let cli = CliMake::new(
@@ -600,7 +600,7 @@ impl<'a> CliMake<'a> {
     ///
     /// ```rust
     /// use std::io;
-    /// use climake::{CliMake, Argument, Input};
+    /// use climake::prelude::*;
     ///
     /// fn main() {
     ///     let verbose = Argument::new(
