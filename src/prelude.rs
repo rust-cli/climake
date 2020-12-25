@@ -1,0 +1,14 @@
+//! Prelude for climake to allow easy importing of data structures
+//!
+//! # Contents
+//!
+//! This prelude is small as climake itself isn't a woefully complex library,
+//! here's what this prelude includes:
+//!
+//! - [climake::Argument]
+//! - [climake::CliMake]
+//! - [climake::Data]
+//! - [climake::Input]
+//! - [climake::Subcommand]
+
+pub use crate::{Argument, CliMake, Data, Input, Subcommand};

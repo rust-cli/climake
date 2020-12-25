@@ -28,6 +28,8 @@
     html_favicon_url = "https://github.com/rust-cli/climake/raw/master/logo.png"
 )]
 
+pub mod prelude;
+
 use std::io::{prelude::*, LineWriter};
 use std::path::PathBuf;
 use std::{env, fmt};
