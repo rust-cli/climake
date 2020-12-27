@@ -18,9 +18,11 @@
 //!
 //! # License
 //!
-//! Duel-licensed under both the [MIT License](https://opensource.org/licenses/MIT)
-//! ([`LICENSE-MIT`](LICENSE-MIT)) and [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0)
-//! ([`LICENSE-APACHE`](LICENSE-APACHE)), you may choose at your discretion.
+//! This library is duel-licensed under both the [MIT License](https://opensource.org/licenses/MIT)
+//! ([`LICENSE-MIT`](https://github.com/rust-cli/climake/blob/master/LICENSE-MIT))
+//! and [Apache 2.0 License](https://www.apache.org/licenses/LICENSE-2.0)
+//! ([`LICENSE-APACHE`](https://github.com/rust-cli/climake/blob/master/LICENSE-APACHE)),
+//! you may choose at your discretion.
 
 #![forbid(unsafe_code)]
 #![doc(
