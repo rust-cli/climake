@@ -437,6 +437,7 @@ impl<'a> Subcommand<'a> {
 /// This structure may be converted into a raw [Argument] with the use of the
 /// [From]<[UsedArgument]> implementation or similarly to the [Data] used for
 /// this argument.
+#[derive(Debug, PartialEq, Clone)]
 pub struct UsedArgument<'a> {
     /// Reference to the argument used
     pub inner: &'a Argument<'a>,
@@ -468,6 +469,7 @@ impl<'a> From<UsedArgument<'a>> for Data {
 /// This structure may be converted into a raw [Subcommand] with the use of the
 /// [From]<[UsedSubcommand]> implementation or similarly the [UsedSubcommand::subcommands]
 /// and [UsedSubcommand::arguments] vectors.
+#[derive(Debug, PartialEq, Clone)]
 pub struct UsedSubcommand<'a> {
     /// Reference to the subcommand used
     pub inner: &'a Subcommand<'a>,
