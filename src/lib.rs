@@ -124,6 +124,7 @@ impl fmt::Display for Input {
 /// If a user requested for an [Argument] to be of [Input::Path],
 /// once parsed this enumeration would be [Data::Path] (in corrospondance with
 /// the name).
+///
 #[derive(Debug, PartialEq, Clone)]
 pub enum Data {
     /// No data provided, from [Input::None]
@@ -166,7 +167,8 @@ impl Data {
     }
 }
 
-/// An argument, infomaton coming soon..
+/// An argument attached to the cli, allowing passing of user data to the top-level
+/// cli or subcommands
 #[derive(Debug, PartialEq, Clone)]
 pub struct Argument<'a> {
     /// Optional help message
@@ -314,8 +316,8 @@ impl<'a> Argument<'a> {
     }
 }
 
-/// Subcommand attached to a cli, allowing non-argument commands to be executed
-/// with arguments attached to oneself for more complex operations
+/// A subcommand attached to the cli, allowing commands and sections of the cli
+/// to form
 #[derive(Debug, PartialEq, Clone)]
 pub struct Subcommand<'a> {
     /// Name of subcommand, used both in help and as the single calling method
@@ -425,7 +427,78 @@ impl<'a> Subcommand<'a> {
     }
 }
 
-/// Main cli structure, infomaton coming soon..
+/// Used argument stemming from [CliMake::parse]-related parsing
+///
+/// This structure contains a reference to the underlying argument and data passed
+/// by user (if any).
+///
+/// # Implementations
+///
+/// This structure may be converted into a raw [Argument] with the use of the
+/// [From]<[UsedArgument]> implementation or similarly to the [Data] used for
+/// this argument.
+pub struct UsedArgument<'a> {
+    /// Reference to the argument used
+    pub inner: &'a Argument<'a>,
+
+    /// Passed data for this argument
+    pub data: Data,
+}
+
+impl<'a> From<UsedArgument<'a>> for &'a Argument<'a> {
+    fn from(used_argument: UsedArgument<'a>) -> Self {
+        used_argument.inner
+    }
+}
+
+impl<'a> From<UsedArgument<'a>> for Data {
+    fn from(used_argument: UsedArgument<'a>) -> Self {
+        used_argument.data
+    }
+}
+
+/// Used subcommand stemming from [CliMake::parse]-related parsing
+///
+/// This strcuture contains a reference to the underlying subcommand and all other
+/// subcommands/arguments below that in a similar [UsedSubcommand]/[UsedArgument]
+/// recursion.
+///
+/// # Implementations
+///
+/// This structure may be converted into a raw [Subcommand] with the use of the
+/// [From]<[UsedSubcommand]> implementation or similarly the [UsedSubcommand::subcommands]
+/// and [UsedSubcommand::arguments] vectors.
+pub struct UsedSubcommand<'a> {
+    /// Reference to the subcommand used
+    pub inner: &'a Subcommand<'a>,
+
+    /// Used subcommands contained inside of this subcommand (if any)
+    pub subcommands: Vec<UsedSubcommand<'a>>,
+
+    /// Used arguments contained inside of this subcommand (if any)
+    pub arguments: Vec<UsedArgument<'a>>,
+}
+
+impl<'a> From<UsedSubcommand<'a>> for &'a Subcommand<'a> {
+    fn from(used_subcommand: UsedSubcommand<'a>) -> Self {
+        used_subcommand.inner
+    }
+}
+
+impl<'a> From<UsedSubcommand<'a>> for Vec<UsedSubcommand<'a>> {
+    fn from(used_subcommand: UsedSubcommand<'a>) -> Self {
+        used_subcommand.subcommands
+    }
+}
+
+impl<'a> From<UsedSubcommand<'a>> for Vec<UsedArgument<'a>> {
+    fn from(used_subcommand: UsedSubcommand<'a>) -> Self {
+        used_subcommand.arguments
+    }
+}
+
+/// The core climake structure, facilitating creation and parsing of both arguments
+/// and subcommands
 #[derive(Debug, PartialEq, Clone)]
 pub struct CliMake<'a> {
     /// Name of the program using the cli
