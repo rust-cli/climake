@@ -1,15 +1,13 @@
 # climake 
 
-The simple, dependency-free cli library ✨
+The simplistic, dependency-free cli library ✨
 
+- **[Documentation](https://docs.rs/climake)**
 - [Crates.io](https://crates.io/crates/climake)
-- [Documentation](https://docs.rs/climake)
 
 ---
 
-This branch represents the unpublished rewrite version of climake with many advantages compared to the original version which is no longer updated!
-
----
+This branch represents the unpublished rewrite version of climake with many advantages compared to the original version which is no longer developed upon!
 
 ## Example 📚
 
@@ -21,7 +19,7 @@ Simply add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-climake = "3.0" # note: rewrite isn't out just yet!
+climake = "3.0.0-pre.1" # rewrite isn't out just yet!
 ```
 
 ## License
