@@ -11,4 +11,6 @@
 //! - [climake::Input](Input)
 //! - [climake::Subcommand](Subcommand)
 
-pub use crate::{Argument, CliMake, Data, Input, Subcommand, UsedArgument, UsedSubcommand};
+pub use crate::{
+    Argument, CliMake, Data, Input, ParsedArgument, ParsedCli, ParsedSubcommand, Subcommand,
+};

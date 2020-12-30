@@ -405,10 +405,10 @@ impl<'a> Subcommand<'a> {
 /// # Implementations
 ///
 /// This structure may be converted into a raw [Argument] with the use of the
-/// [From]<[UsedArgument]> implementation or similarly to the [Data] used for
+/// [From]<[ParsedArgument]> implementation or similarly to the [Data] used for
 /// this argument.
 #[derive(Debug, PartialEq, Clone)]
-pub struct UsedArgument<'a> {
+pub struct ParsedArgument<'a> {
     /// Reference to the argument used
     pub inner: &'a Argument<'a>,
 
@@ -416,56 +416,84 @@ pub struct UsedArgument<'a> {
     pub data: Data,
 }
 
-impl<'a> From<UsedArgument<'a>> for &'a Argument<'a> {
-    fn from(used_argument: UsedArgument<'a>) -> Self {
-        used_argument.inner
+impl<'a> From<ParsedArgument<'a>> for &'a Argument<'a> {
+    fn from(parsed_argument: ParsedArgument<'a>) -> Self {
+        parsed_argument.inner
     }
 }
 
-impl<'a> From<UsedArgument<'a>> for Data {
-    fn from(used_argument: UsedArgument<'a>) -> Self {
-        used_argument.data
+impl<'a> From<ParsedArgument<'a>> for Data {
+    fn from(parsed_argument: ParsedArgument<'a>) -> Self {
+        parsed_argument.data
     }
 }
 
 /// Used subcommand stemming from [CliMake::parse]-related parsing
 ///
 /// This strcuture contains a reference to the underlying subcommand and all other
-/// subcommands/arguments below that in a similar [UsedSubcommand]/[UsedArgument]
+/// subcommands/arguments below that in a similar [ParsedSubcommand]/[ParsedArgument]
 /// recursion.
 ///
 /// # Implementations
 ///
 /// This structure may be converted into a raw [Subcommand] with the use of the
-/// [From]<[UsedSubcommand]> implementation or similarly the [UsedSubcommand::subcommands]
-/// and [UsedSubcommand::arguments] vectors.
+/// [From]<[ParsedSubcommand]> implementation or similarly the [ParsedSubcommand::subcommands]
+/// and [ParsedSubcommand::arguments] vectors.
 #[derive(Debug, PartialEq, Clone)]
-pub struct UsedSubcommand<'a> {
+pub struct ParsedSubcommand<'a> {
     /// Reference to the subcommand used
     pub inner: &'a Subcommand<'a>,
 
     /// Used subcommands contained inside of this subcommand (if any)
-    pub subcommands: Vec<UsedSubcommand<'a>>,
+    pub subcommands: Vec<ParsedSubcommand<'a>>,
 
     /// Used arguments contained inside of this subcommand (if any)
-    pub arguments: Vec<UsedArgument<'a>>,
+    pub arguments: Vec<ParsedArgument<'a>>,
 }
 
-impl<'a> From<UsedSubcommand<'a>> for &'a Subcommand<'a> {
-    fn from(used_subcommand: UsedSubcommand<'a>) -> Self {
-        used_subcommand.inner
+impl<'a> From<ParsedSubcommand<'a>> for &'a Subcommand<'a> {
+    fn from(parsed_subcommand: ParsedSubcommand<'a>) -> Self {
+        parsed_subcommand.inner
     }
 }
 
-impl<'a> From<UsedSubcommand<'a>> for Vec<UsedSubcommand<'a>> {
-    fn from(used_subcommand: UsedSubcommand<'a>) -> Self {
-        used_subcommand.subcommands
+impl<'a> From<ParsedSubcommand<'a>> for Vec<ParsedSubcommand<'a>> {
+    fn from(parsed_subcommand: ParsedSubcommand<'a>) -> Self {
+        parsed_subcommand.subcommands
     }
 }
 
-impl<'a> From<UsedSubcommand<'a>> for Vec<UsedArgument<'a>> {
-    fn from(used_subcommand: UsedSubcommand<'a>) -> Self {
-        used_subcommand.arguments
+impl<'a> From<ParsedSubcommand<'a>> for Vec<ParsedArgument<'a>> {
+    fn from(parsed_subcommand: ParsedSubcommand<'a>) -> Self {
+        parsed_subcommand.arguments
+    }
+}
+
+/// Similar to [ParsedSubcommand], contains the top-level parsed arguments from
+/// [CliMake::parse]-related parsing
+///
+/// # Implementations
+///
+/// This structure may be converted into a vector of subcommands from [ParsedCli::subcommands]
+/// or arguments from [ParsedCli::arguments].
+#[derive(Debug, PartialEq, Clone)]
+pub struct ParsedCli<'a> {
+    /// Used subcommands contained inside of top-level parsed
+    pub subcommands: Vec<ParsedSubcommand<'a>>,
+
+    /// Used arguments contained inside of top-level parsed
+    pub arguments: Vec<ParsedArgument<'a>>,
+}
+
+impl<'a> From<ParsedCli<'a>> for Vec<ParsedSubcommand<'a>> {
+    fn from(used_cli: ParsedCli<'a>) -> Self {
+        used_cli.subcommands
+    }
+}
+
+impl<'a> From<ParsedCli<'a>> for Vec<ParsedArgument<'a>> {
+    fn from(used_cli: ParsedCli<'a>) -> Self {
+        used_cli.arguments
     }
 }
 
@@ -662,6 +690,18 @@ impl<'a> CliMake<'a> {
         }
 
         Ok(())
+    }
+
+    /// Parses all arguments from a custom iterator, see [CliMake::parse] for
+    /// default parsing from [std::os::args]
+    pub fn parse_custom(&'a self, arguments: impl IntoIterator<Item = String>) -> ParsedCli<'a> {
+        // for argument in arguments.into_iter() {}
+        unimplemented!()
+    }
+
+    /// Parses default arguments coming from [std::os::args]
+    pub fn parse(&'a self) -> ParsedCli<'a> {
+        self.parse_custom(env::args())
     }
 }
 
