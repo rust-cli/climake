@@ -250,21 +250,6 @@ impl<'a> Argument<'a> {
     ///
     /// # Example
     ///
-    /// Usage:
-    ///
-    /// ```rust
-    /// use std::io;
-    /// use climake::prelude::*;
-    ///
-    /// fn main() {
-    ///     let arg = Argument::new(
-    ///         "Verbose mode", vec!['v'], vec!["verbose"], Input::None
-    ///     );
-    ///
-    ///     arg.help_name_msg(&mut io::stdout()).unwrap();
-    /// }
-    /// ```
-    ///
     /// What this may look like:
     ///
     /// ```none
@@ -396,21 +381,6 @@ impl<'a> Subcommand<'a> {
     /// for simplicity, perf and extendability reasons.
     ///
     /// # Example
-    ///
-    /// Usage:
-    ///
-    /// ```rust
-    /// use std::io;
-    /// use climake::prelude::*;
-    ///
-    /// fn main() {
-    ///     let subcmd = Subcommand::new(
-    ///         "example", vec![], vec![], "A simple example subcommand"
-    ///     );
-    ///
-    ///     subcmd.help_name_msg(&mut io::stdout()).unwrap();
-    /// }
-    /// ```
     ///
     /// What this may look like:
     ///
@@ -607,21 +577,6 @@ impl<'a> CliMake<'a> {
     ///
     /// # Example
     ///
-    /// Usage:
-    ///
-    /// ```rust
-    /// use std::io;
-    /// use climake::prelude::*;
-    ///
-    /// fn main() {
-    ///     let cli = CliMake::new(
-    ///         "My app", vec![], vec![], "A simple application", "0.1.0"
-    ///     );
-    ///
-    ///     cli.header_msg(None, &mut io::stdout()).unwrap();
-    /// }
-    /// ```
-    ///
     /// What this may display:
     ///
     /// ```none
@@ -672,28 +627,6 @@ impl<'a> CliMake<'a> {
     /// - [Argument::help_name_msg]: Help generation for single [Argument]s
     ///
     /// # Example
-    ///
-    /// Usage:
-    ///
-    /// ```rust
-    /// use std::io;
-    /// use climake::prelude::*;
-    ///
-    /// fn main() {
-    ///     let verbose = Argument::new(
-    ///         "Toggles verbose mode",
-    ///         vec!['v'],
-    ///         vec!["verbose"],
-    ///         Input::None
-    ///     );
-    ///
-    ///     let cli = CliMake::new(
-    ///         "My app", vec![&verbose], vec![], "A simple application", "0.1.0"
-    ///     );
-    ///
-    ///     cli.help_msg(&mut io::stdout()).unwrap();
-    /// }
-    /// ```
     ///
     /// What this may look like:
     ///
