@@ -30,6 +30,7 @@
     html_favicon_url = "https://github.com/rust-cli/climake/raw/master/logo.png"
 )]
 
+pub mod parsed;
 pub mod prelude;
 
 use std::io::{prelude::*, LineWriter};
@@ -397,106 +398,6 @@ impl<'a> Subcommand<'a> {
     }
 }
 
-/// Used argument stemming from [CliMake::parse]-related parsing
-///
-/// This structure contains a reference to the underlying argument and data passed
-/// by user (if any).
-///
-/// # Implementations
-///
-/// This structure may be converted into a raw [Argument] with the use of the
-/// [From]<[ParsedArgument]> implementation or similarly to the [Data] used for
-/// this argument.
-#[derive(Debug, PartialEq, Clone)]
-pub struct ParsedArgument<'a> {
-    /// Reference to the argument used
-    pub inner: &'a Argument<'a>,
-
-    /// Passed data for this argument
-    pub data: Data,
-}
-
-impl<'a> From<ParsedArgument<'a>> for &'a Argument<'a> {
-    fn from(parsed_argument: ParsedArgument<'a>) -> Self {
-        parsed_argument.inner
-    }
-}
-
-impl<'a> From<ParsedArgument<'a>> for Data {
-    fn from(parsed_argument: ParsedArgument<'a>) -> Self {
-        parsed_argument.data
-    }
-}
-
-/// Used subcommand stemming from [CliMake::parse]-related parsing
-///
-/// This strcuture contains a reference to the underlying subcommand and all other
-/// subcommands/arguments below that in a similar [ParsedSubcommand]/[ParsedArgument]
-/// recursion.
-///
-/// # Implementations
-///
-/// This structure may be converted into a raw [Subcommand] with the use of the
-/// [From]<[ParsedSubcommand]> implementation or similarly the [ParsedSubcommand::subcommands]
-/// and [ParsedSubcommand::arguments] vectors.
-#[derive(Debug, PartialEq, Clone)]
-pub struct ParsedSubcommand<'a> {
-    /// Reference to the subcommand used
-    pub inner: &'a Subcommand<'a>,
-
-    /// Used subcommands contained inside of this subcommand (if any)
-    pub subcommands: Vec<ParsedSubcommand<'a>>,
-
-    /// Used arguments contained inside of this subcommand (if any)
-    pub arguments: Vec<ParsedArgument<'a>>,
-}
-
-impl<'a> From<ParsedSubcommand<'a>> for &'a Subcommand<'a> {
-    fn from(parsed_subcommand: ParsedSubcommand<'a>) -> Self {
-        parsed_subcommand.inner
-    }
-}
-
-impl<'a> From<ParsedSubcommand<'a>> for Vec<ParsedSubcommand<'a>> {
-    fn from(parsed_subcommand: ParsedSubcommand<'a>) -> Self {
-        parsed_subcommand.subcommands
-    }
-}
-
-impl<'a> From<ParsedSubcommand<'a>> for Vec<ParsedArgument<'a>> {
-    fn from(parsed_subcommand: ParsedSubcommand<'a>) -> Self {
-        parsed_subcommand.arguments
-    }
-}
-
-/// Similar to [ParsedSubcommand], contains the top-level parsed arguments from
-/// [CliMake::parse]-related parsing
-///
-/// # Implementations
-///
-/// This structure may be converted into a vector of subcommands from [ParsedCli::subcommands]
-/// or arguments from [ParsedCli::arguments].
-#[derive(Debug, PartialEq, Clone)]
-pub struct ParsedCli<'a> {
-    /// Used subcommands contained inside of top-level parsed
-    pub subcommands: Vec<ParsedSubcommand<'a>>,
-
-    /// Used arguments contained inside of top-level parsed
-    pub arguments: Vec<ParsedArgument<'a>>,
-}
-
-impl<'a> From<ParsedCli<'a>> for Vec<ParsedSubcommand<'a>> {
-    fn from(used_cli: ParsedCli<'a>) -> Self {
-        used_cli.subcommands
-    }
-}
-
-impl<'a> From<ParsedCli<'a>> for Vec<ParsedArgument<'a>> {
-    fn from(used_cli: ParsedCli<'a>) -> Self {
-        used_cli.arguments
-    }
-}
-
 /// The core climake structure, facilitating creation and parsing of both arguments
 /// and subcommands
 #[derive(Debug, PartialEq, Clone)]
@@ -694,13 +595,16 @@ impl<'a> CliMake<'a> {
 
     /// Parses all arguments from a custom iterator, see [CliMake::parse] for
     /// default parsing from [std::os::args]
-    pub fn parse_custom(&'a self, arguments: impl IntoIterator<Item = String>) -> ParsedCli<'a> {
+    pub fn parse_custom(
+        &'a self,
+        arguments: impl IntoIterator<Item = String>,
+    ) -> parsed::ParsedCli<'a> {
         // for argument in arguments.into_iter() {}
         unimplemented!()
     }
 
     /// Parses default arguments coming from [std::os::args]
-    pub fn parse(&'a self) -> ParsedCli<'a> {
+    pub fn parse(&'a self) -> parsed::ParsedCli<'a> {
         self.parse_custom(env::args())
     }
 }

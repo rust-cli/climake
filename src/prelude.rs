@@ -10,7 +10,9 @@
 //! - [climake::Data](Data)
 //! - [climake::Input](Input)
 //! - [climake::Subcommand](Subcommand)
+//! - [climake::parsed::ParsedArgument](ParsedArgument)
+//! - [climake::parsed::ParsedCli](ParsedCli)
+//! - [climake::parsed::ParsedSubcommand](ParsedSubcommand)
 
-pub use crate::{
-    Argument, CliMake, Data, Input, ParsedArgument, ParsedCli, ParsedSubcommand, Subcommand,
-};
+pub use crate::parsed::{ParsedArgument, ParsedCli, ParsedSubcommand};
+pub use crate::{Argument, CliMake, Data, Input, Subcommand};
