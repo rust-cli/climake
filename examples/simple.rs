@@ -23,11 +23,11 @@ fn main() {
 
     let parsed = cli.parse();
 
-    for (subcommand, data) in parsed.subcommands {
-        if subcommand == add {
-            println!("Adding package {}..", data);
-        } else if subcommand == rem {
-            println!("Removing package {}..", data);
+    for subcommand in parsed.subcommands {
+        if subcommand.inner == &add {
+            println!("Adding package {:?}..", subcommand.arguments[0]);
+        } else if subcommand.inner == &rem {
+            println!("Removing package {:?}..", subcommand.arguments[0]);
         }
     }
 }
