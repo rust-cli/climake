@@ -1,8 +1,9 @@
 //! Contains [Subcommand]-related items, see specific documentation for more
 //! information
 
-use crate::utils::writeln_term;
-use crate::{Argument, CliMake, HELP_DEFAULT};
+use super::utils::writeln_term;
+use super::{Argument, CliMake};
+use crate::HELP_DEFAULT;
 
 use std::io::Write;
 

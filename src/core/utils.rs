@@ -1,6 +1,7 @@
 //! Utility items for internal crate operation
 
 use crate::CLI_TABBING;
+
 use std::io::{LineWriter, Write};
 
 /// Writes a given buffer to terminal using [LineWriter] and splits every 80
