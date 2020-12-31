@@ -5,14 +5,17 @@
 //! This prelude is small as climake itself isn't a woefully complex library,
 //! here's what this prelude includes:
 //!
-//! - [climake::Argument](Argument)
-//! - [climake::CliMake](CliMake)
-//! - [climake::Subcommand](Subcommand)
-//! - [climake::io::Data](Data)
-//! - [climake::io::Input](Input)
-//! - [climake::parsed::ParsedArgument](ParsedArgument)
-//! - [climake::parsed::ParsedCli](ParsedCli)
-//! - [climake::parsed::ParsedSubcommand](ParsedSubcommand)
+//! - Base-level
+//!   - [climake::Argument](Argument)
+//!   - [climake::CliMake](CliMake)
+//!   - [climake::Subcommand](Subcommand)
+//! - IO structures
+//!   - [climake::io::Data](Data)
+//!   - [climake::io::Input](Input)
+//! - Parsed structures
+//!   - [climake::parsed::ParsedArgument](ParsedArgument)
+//!   - [climake::parsed::ParsedCli](ParsedCli)
+//!   - [climake::parsed::ParsedSubcommand](ParsedSubcommand)
 
 pub use crate::io::{Data, Input};
 pub use crate::parsed::{ParsedArgument, ParsedCli, ParsedSubcommand};

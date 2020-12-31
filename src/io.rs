@@ -9,9 +9,9 @@
 use std::fmt;
 use std::path::PathBuf;
 
-/// An input type, typically given for an [Argument] to descibe what types are
-/// allowed to be passwed in. This is then transferred to [Data] once the cli
-/// has been executed
+/// An input type, typically given for an [Argument](crate::Argument) to descibe
+/// what types are allowed to be passwed in. This is then transferred to [Data]
+/// once the cli has been executed
 #[derive(Debug, PartialEq, Clone)]
 pub enum Input {
     /// No input allowed, will error if any is given. Maps to [Data::None]
@@ -43,11 +43,12 @@ impl fmt::Display for Input {
 }
 
 /// Outputted data from parsing a cli for each argument. This enumeration is based
-/// upon the allowed [Input] of a given [Argument] and maps directly to the input
+/// upon the allowed [Input] of a given [Argument](crate::Argument) and maps
+/// directly to the input
 ///
 /// # Mappings from [Input]
 ///
-/// If a user requested for an [Argument] to be of [Input::Path],
+/// If a user requested for an [Argument](crate::Argument) to be of [Input::Path],
 /// once parsed this enumeration would be [Data::Path] (in corrospondance with
 /// the name).
 ///

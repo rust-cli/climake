@@ -8,7 +8,8 @@
 use crate::io::Data;
 use crate::{Argument, Subcommand};
 
-/// Used argument stemming from [CliMake::parse]-related parsing
+/// Used argument stemming from [CliMake::parse](crate::CliMake::parse)-related
+/// parsing
 ///
 /// This structure contains a reference to the underlying argument and data passed
 /// by user (if any).
@@ -39,7 +40,8 @@ impl<'a> From<ParsedArgument<'a>> for Data {
     }
 }
 
-/// Used subcommand stemming from [CliMake::parse]-related parsing
+/// Used subcommand stemming from [CliMake::parse](crate::CliMake::parse)-related
+/// parsing
 ///
 /// This strcuture contains a reference to the underlying subcommand and all other
 /// subcommands/arguments below that in a similar [ParsedSubcommand]/[ParsedArgument]
@@ -81,7 +83,7 @@ impl<'a> From<ParsedSubcommand<'a>> for Vec<ParsedArgument<'a>> {
 }
 
 /// Similar to [ParsedSubcommand], contains the top-level parsed arguments from
-/// [CliMake::parse]-related parsing
+/// [CliMake::parse](crate::CliMake::parse)-related parsing
 ///
 /// # Implementations
 ///
