@@ -74,7 +74,7 @@ pub enum Data {
 impl Data {
     /// Creates a new [Data] from with types mapping from [Input] using passed
     /// `data`. This may map the `data` string vec into types such as `PathBuf`
-    fn new(input: Input, data: impl IntoIterator<Item = String>) -> Self {
+    pub(crate) fn new(input: Input, data: impl IntoIterator<Item = String>) -> Self {
         match input {
             Input::None => Data::None, // ignore passed `data` (if any)
             Input::Text => match data.into_iter().next() {

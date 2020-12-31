@@ -5,7 +5,10 @@ use std::io::{LineWriter, Write};
 
 /// Writes a given buffer to terminal using [LineWriter] and splits every 80
 /// characters, making it ideal for concise terminal displays for help messages
-pub fn writeln_term(to_write: impl Into<String>, buf: &mut impl Write) -> std::io::Result<()> {
+pub(crate) fn writeln_term(
+    to_write: impl Into<String>,
+    buf: &mut impl Write,
+) -> std::io::Result<()> {
     let mut line_buf = LineWriter::new(buf);
     let newline_byte = "\n".as_bytes();
 
