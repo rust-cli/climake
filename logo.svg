@@ -5,11 +5,39 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="1024"
-   height="1024"
-   viewBox="0 0 270.93333 270.93334"
+   height="256"
+   viewBox="0 0 270.93333 67.733335"
    version="1.1"
-   id="svg8">
+   id="svg8"
+   sodipodi:docname="logo.svg"
+   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
+   inkscape:export-filename="/home/owen/Projects/rust/climake/logo.png"
+   inkscape:export-xdpi="96.000008"
+   inkscape:export-ydpi="96.000008">
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1600"
+     inkscape:window-height="876"
+     id="namedview883"
+     showgrid="false"
+     inkscape:zoom="0.65527344"
+     inkscape:cx="513.52608"
+     inkscape:cy="375.04786"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg8"
+     inkscape:document-rotation="0" />
   <defs
      id="defs2" />
   <metadata
@@ -25,16 +53,18 @@
     </rdf:RDF>
   </metadata>
   <g
-     id="layer1">
+     id="layer1"
+     transform="translate(8.0085966e-5,-101.60001)"
+     style="fill:#999999">
     <text
        xml:space="preserve"
-       style="font-size:41.6302px;line-height:1.25;font-family:FreeSans;-inkscape-font-specification:FreeSans;fill:#b3b3b3;stroke-width:1.04076"
+       style="font-size:41.6302px;line-height:1.25;font-family:FreeSans;-inkscape-font-specification:FreeSans;fill:#999999;stroke-width:1.04076"
        x="21.969412"
        y="148.61841"
        id="text835"><tspan
          id="tspan833"
          x="21.969412"
          y="148.61841"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:hack;-inkscape-font-specification:hack;fill:#b3b3b3;stroke-width:1.04076">$ climake</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:hack;-inkscape-font-specification:hack;fill:#999999;stroke-width:1.04076">$ climake</tspan></text>
   </g>
 </svg>
