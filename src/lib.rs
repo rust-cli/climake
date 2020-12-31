@@ -30,11 +30,13 @@
     html_favicon_url = "https://github.com/rust-cli/climake/raw/master/logo.png"
 )]
 
+mod utils;
+
+pub mod io;
 pub mod parsed;
 pub mod prelude;
 
 use std::io::{prelude::*, LineWriter};
-use std::path::PathBuf;
 use std::{env, fmt};
 
 /// Default help message for [Argument]s without help added
@@ -84,90 +86,6 @@ impl From<String> for CallType {
     }
 }
 
-/// An input type, typically given for an [Argument] to descibe what types are
-/// allowed to be passwed in. This is then transferred to [Data] once the cli
-/// has been executed
-#[derive(Debug, PartialEq, Clone)]
-pub enum Input {
-    /// No input allowed, will error if any is given. Maps to [Data::None]
-    None,
-
-    /// Text input allowed, this will return an empty string if no text is supplied.
-    /// Maps to [Data::Text]
-    Text,
-
-    /// A single [PathBuf] given to the argument, these are not certain to exist
-    /// and simply echo the user's input. Maps to [Data::Path]
-    Path,
-
-    /// Multiple [PathBuf]s given to the argument, these are not certain to exist
-    /// and simply echo the user's input. Maps to [Data::Paths]
-    Paths,
-}
-
-impl fmt::Display for Input {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // formatting has a space on existing words on purpouse for help generation
-        match self {
-            Input::None => write!(f, ""),
-            Input::Text => write!(f, "[text] "),
-            Input::Path => write!(f, "[path] "),
-            Input::Paths => write!(f, "[paths] "),
-        }
-    }
-}
-
-/// Outputted data from parsing a cli for each argument. This enumeration is based
-/// upon the allowed [Input] of a given [Argument] and maps directly to the input
-///
-/// # Mappings from [Input]
-///
-/// If a user requested for an [Argument] to be of [Input::Path],
-/// once parsed this enumeration would be [Data::Path] (in corrospondance with
-/// the name).
-///
-#[derive(Debug, PartialEq, Clone)]
-pub enum Data {
-    /// No data provided, from [Input::None]
-    None,
-
-    /// Textual input provided, from [Input::Text]. This may be an empty string
-    /// in the case of the user not actually providing input
-    Text(String),
-
-    /// Path input provided, from [Input::Path]. This may be an empty or invalid
-    /// [PathBuf] in the case of user input being misleading or non-existant
-    Path(PathBuf),
-
-    /// Multiple path inputs provided, from [Input::Paths]. This may be an empty
-    /// vector (i.e. length 0) if the user doesn't provide any paths or may be
-    /// non-existant paths given from user input
-    Paths(Vec<PathBuf>),
-}
-
-impl Data {
-    /// Creates a new [Data] from with types mapping from [Input] using passed
-    /// `data`. This may map the `data` string vec into types such as `PathBuf`
-    fn new(input: Input, data: impl IntoIterator<Item = String>) -> Self {
-        match input {
-            Input::None => Data::None, // ignore passed `data` (if any)
-            Input::Text => match data.into_iter().next() {
-                Some(text) => Data::Text(text),
-                None => Data::Text(String::new()),
-            },
-            Input::Path => match data.into_iter().next() {
-                Some(path_string) => Data::Path(PathBuf::from(path_string)),
-                None => Data::Path(PathBuf::new()),
-            },
-            Input::Paths => Data::Paths(
-                data.into_iter()
-                    .map(|path_string| PathBuf::from(path_string))
-                    .collect(),
-            ),
-        }
-    }
-}
-
 /// An argument attached to the cli, allowing passing of user data to the top-level
 /// cli or subcommands
 #[derive(Debug, PartialEq, Clone)]
@@ -178,8 +96,8 @@ pub struct Argument<'a> {
     /// Many [CallType]s corrosponding to this argument
     calls: Vec<CallType>,
 
-    /// [Input] type allowed for this argument
-    input: Input,
+    /// [io::Input] type allowed for this argument
+    input: io::Input,
 
     /// Required argument for given root cli or [Subcommand]. If this argument is
     /// not present whilst the cli parses, it will provide an apt error
@@ -195,7 +113,7 @@ impl<'a> Argument<'a> {
         help: impl Into<Option<&'a str>>,
         short_calls: impl IntoIterator<Item = char>,
         long_calls: impl IntoIterator<Item = &'a str>,
-        input: impl Into<Input>,
+        input: impl Into<io::Input>,
     ) -> Self {
         let mut calls: Vec<CallType> = short_calls
             .into_iter()
@@ -282,7 +200,7 @@ impl<'a> Argument<'a> {
         };
         let required_msg = if self.required { "[REQUIRED] " } else { "" };
 
-        writeln_term(
+        utils::writeln_term(
             if formatted_calls.len() == 1 && formatted_calls[0] != "" {
                 format!(
                     "{} {}{}— {}",
@@ -347,7 +265,7 @@ impl<'a> Subcommand<'a> {
         match self.help {
             Some(help) => {
                 buf.write("\nAbout:\n".as_bytes())?;
-                writeln_term(help, buf)?;
+                utils::writeln_term(help, buf)?;
             }
             None => (),
         };
@@ -394,7 +312,7 @@ impl<'a> Subcommand<'a> {
             None => HELP_DEFAULT,
         };
 
-        writeln_term(format!("{} — {}", self.name, formatted_help), buf)
+        utils::writeln_term(format!("{} — {}", self.name, formatted_help), buf)
     }
 }
 
@@ -532,7 +450,7 @@ impl<'a> CliMake<'a> {
             Some(d) => {
                 buf.write("\n".as_bytes())?; // write formatting empty byte
 
-                writeln_term(
+                utils::writeln_term(
                     match &self.version {
                         Some(v) => format!("{} v{} — {}", self.name, v, d),
                         None => format!("{} — {}", self.name, d),
@@ -609,19 +527,6 @@ impl<'a> CliMake<'a> {
     }
 }
 
-/// Writes a given buffer to terminal using [LineWriter] and splits every 80
-/// characters, making it ideal for concise terminal displays for help messages
-fn writeln_term(to_write: impl Into<String>, buf: &mut impl Write) -> std::io::Result<()> {
-    let mut line_buf = LineWriter::new(buf);
-    let newline_byte = "\n".as_bytes();
-
-    for line in to_write.into().as_bytes().chunks(80 - CLI_TABBING.len()) {
-        line_buf.write(&[CLI_TABBING.as_bytes(), line, newline_byte].concat())?;
-    }
-
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -630,7 +535,7 @@ mod tests {
     #[test]
     fn arg_new() {
         assert_eq!(
-            Argument::new(None, vec!['a', 'b'], vec!["hi", "there"], Input::Text),
+            Argument::new(None, vec!['a', 'b'], vec!["hi", "there"], io::Input::Text),
             Argument {
                 calls: vec![
                     CallType::Short('a'),
@@ -639,7 +544,7 @@ mod tests {
                     CallType::Long("there".to_string())
                 ],
                 help: None,
-                input: Input::Text,
+                input: io::Input::Text,
                 required: false,
             }
         )
@@ -650,14 +555,14 @@ mod tests {
     fn arg_name_help() -> std::io::Result<()> {
         let mut chk_vec: Vec<u8> = vec![];
 
-        Argument::new(None, vec![], vec![], Input::None).help_name_msg(&mut chk_vec)?;
+        Argument::new(None, vec![], vec![], io::Input::None).help_name_msg(&mut chk_vec)?;
         assert_eq!(
             std::str::from_utf8(chk_vec.as_slice()).unwrap(),
             "  () — No help provided\n"
         );
         chk_vec = vec![];
 
-        Argument::new("Some simple help", vec!['a'], vec!["long"], Input::Text)
+        Argument::new("Some simple help", vec!['a'], vec!["long"], io::Input::Text)
             .help_name_msg(&mut chk_vec)?;
         assert_eq!(
             std::str::from_utf8(chk_vec.as_slice()).unwrap(),
@@ -665,7 +570,7 @@ mod tests {
         );
         chk_vec = vec![];
 
-        Argument::new(None, vec!['a'], vec![], Input::Text).help_name_msg(&mut chk_vec)?;
+        Argument::new(None, vec!['a'], vec![], io::Input::Text).help_name_msg(&mut chk_vec)?;
         assert_eq!(
             std::str::from_utf8(chk_vec.as_slice()).unwrap(),
             "  -a [text] — No help provided\n"
@@ -680,7 +585,7 @@ mod tests {
     fn arg_name_help_required() -> std::io::Result<()> {
         let mut chk_vec: Vec<u8> = vec![];
 
-        let mut arg = Argument::new("Some argument", vec!['s'], vec![], Input::None);
+        let mut arg = Argument::new("Some argument", vec!['s'], vec![], io::Input::None);
         arg.required = true;
         arg.help_name_msg(&mut chk_vec)?;
         assert_eq!(
@@ -710,7 +615,7 @@ mod tests {
     #[test]
     fn cli_add_arg() {
         let mut cli = CliMake::new("example", vec![], vec![], "Add arg check", None);
-        let arg = Argument::new("arg help", vec![], vec![], Input::None);
+        let arg = Argument::new("arg help", vec![], vec![], io::Input::None);
 
         cli.add_arg(&arg).add_arg(&arg);
 
@@ -721,7 +626,7 @@ mod tests {
     #[test]
     fn cli_add_args() {
         let mut cli = CliMake::new("example", vec![], vec![], "Add arg check", None);
-        let arg = Argument::new("arg help", vec![], vec![], Input::None);
+        let arg = Argument::new("arg help", vec![], vec![], io::Input::None);
 
         cli.add_args(vec![&arg, &arg]).add_args(vec![&arg, &arg]);
 
@@ -754,97 +659,54 @@ mod tests {
     /// Checks that the [Argument::add_scall] method works correctly
     #[test]
     fn arg_add_scall() {
-        let mut arg = Argument::new("example", vec![], vec![], Input::None);
+        let mut arg = Argument::new("example", vec![], vec![], io::Input::None);
 
         arg.add_scall('a').add_scall('b').add_scall('c');
 
         assert_eq!(
             arg,
-            Argument::new("example", vec!['a', 'b', 'c'], vec![], Input::None)
+            Argument::new("example", vec!['a', 'b', 'c'], vec![], io::Input::None)
         )
     }
 
     /// Checks that the [Argument::add_scalls] method works correctly
     #[test]
     fn arg_add_scalls() {
-        let mut arg = Argument::new("example", vec![], vec![], Input::None);
+        let mut arg = Argument::new("example", vec![], vec![], io::Input::None);
 
         arg.add_scalls(vec!['a', 'b']).add_scalls(vec!['c']);
 
         assert_eq!(
             arg,
-            Argument::new("example", vec!['a', 'b', 'c'], vec![], Input::None)
+            Argument::new("example", vec!['a', 'b', 'c'], vec![], io::Input::None)
         )
     }
 
     /// Checks that the [Argument::add_lcall] method works correctly
     #[test]
     fn arg_add_lcall() {
-        let mut arg = Argument::new("example", vec![], vec![], Input::None);
+        let mut arg = Argument::new("example", vec![], vec![], io::Input::None);
 
         arg.add_lcall("a").add_lcall("b").add_lcall("c");
 
         assert_eq!(
             arg,
-            Argument::new("example", vec![], vec!["a", "b", "c"], Input::None)
+            Argument::new("example", vec![], vec!["a", "b", "c"], io::Input::None)
         )
     }
 
     /// Checks that the [Argument::add_lcalls] method works correctly
     #[test]
     fn arg_add_lcalls() {
-        let mut arg = Argument::new("example", vec![], vec![], Input::None);
+        let mut arg = Argument::new("example", vec![], vec![], io::Input::None);
 
         arg.add_lcalls(vec!["a".to_string(), "b".to_string()])
             .add_lcalls(vec!["c".to_string()]);
 
         assert_eq!(
             arg,
-            Argument::new("example", vec![], vec!["a", "b", "c"], Input::None)
+            Argument::new("example", vec![], vec!["a", "b", "c"], io::Input::None)
         )
-    }
-
-    /// Checks that the [Data::new] method works correctly
-    #[test]
-    fn data_new() {
-        let testval = String::from("Hi!");
-
-        // Data::None
-        assert_eq!(Data::new(Input::None, vec![]), Data::None);
-        assert_eq!(Data::new(Input::None, vec![testval.clone()]), Data::None);
-
-        // Data::Text
-        assert_eq!(Data::new(Input::Text, vec![]), Data::Text(String::new()));
-        assert_eq!(
-            Data::new(Input::Text, vec![testval.clone()]),
-            Data::Text(testval.clone())
-        );
-        assert_eq!(
-            Data::new(Input::Text, vec![testval.clone(), testval.clone()]),
-            Data::Text(testval.clone())
-        );
-
-        // Data::Path
-        assert_eq!(Data::new(Input::Path, vec![]), Data::Path(PathBuf::new()));
-        assert_eq!(
-            Data::new(Input::Path, vec![testval.clone()]),
-            Data::Path(PathBuf::from(testval.clone()))
-        );
-        assert_eq!(
-            Data::new(Input::Path, vec![testval.clone(), testval.clone()]),
-            Data::Path(PathBuf::from(testval.clone()))
-        );
-
-        // Data::Paths
-        assert_eq!(Data::new(Input::Paths, vec![]), Data::Paths(vec![]));
-        assert_eq!(
-            Data::new(Input::Paths, vec![testval.clone()]),
-            Data::Paths(vec![PathBuf::from(testval.clone())])
-        );
-        assert_eq!(
-            Data::new(Input::Paths, vec![testval.clone(), testval.clone()]),
-            Data::Paths(vec![PathBuf::from(testval.clone()), PathBuf::from(testval)])
-        );
     }
 
     /// Checks that the [From]<[CallType]> implementation for [String] works correctly

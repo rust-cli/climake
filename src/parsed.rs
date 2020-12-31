@@ -5,7 +5,8 @@
 //! This module is included in [crate::prelude] by default so no extra importing
 //! steps are required (unless you are importing explicit items).
 
-use crate::{Argument, Data, Subcommand};
+use crate::io::Data;
+use crate::{Argument, Subcommand};
 
 /// Used argument stemming from [CliMake::parse]-related parsing
 ///
