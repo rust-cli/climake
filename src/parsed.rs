@@ -64,6 +64,18 @@ pub struct ParsedSubcommand<'a> {
     pub arguments: Vec<ParsedArgument<'a>>,
 }
 
+impl<'a> ParsedSubcommand<'a> {
+    /// Internal method which creates a new, empty [ParsedSubcommand] for use
+    /// whilst parsing
+    pub(crate) fn new_empty(subcommand: &'a Subcommand<'a>) -> Self {
+        Self {
+            inner: subcommand,
+            subcommands: vec![],
+            arguments: vec![],
+        }
+    }
+}
+
 impl<'a> From<ParsedSubcommand<'a>> for &'a Subcommand<'a> {
     fn from(parsed_subcommand: ParsedSubcommand<'a>) -> Self {
         parsed_subcommand.inner
